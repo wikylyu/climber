@@ -1,0 +1,6 @@
+data/xyz.wikylyu.climber.desktop.in
+data/xyz.wikylyu.climber.appdata.xml.in
+data/xyz.wikylyu.climber.gschema.xml
+src/main.c
+src/climber-window.c
+src/climber-window.ui

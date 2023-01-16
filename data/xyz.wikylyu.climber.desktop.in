@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=climber
+Exec=climber
+Icon=xyz.wikylyu.climber
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true
