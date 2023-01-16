@@ -70,7 +70,8 @@ static void climber_application_about_action(GSimpleAction *action,
       window, "application-name", "Climber", "application-icon",
       "xyz.wikylyu.climber", "developer-name", "Wiky Lyu", "version", "0.1.0",
       "developers", developers, "copyright", "© 2023 Wiky Lyu", "license-type",
-      GTK_LICENSE_GPL_3_0, "wrap-license", TRUE, NULL);
+      GTK_LICENSE_GPL_3_0, "website", "https://github.com/GClimber/climber",
+      "issue-url", "https://github.com/GClimber/climber/issues", NULL);
 }
 
 static void climber_application_quit_action(GSimpleAction *action,
