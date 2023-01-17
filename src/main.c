@@ -24,19 +24,17 @@
 
 #include "climber-application.h"
 
-int
-main (int   argc,
-      char *argv[])
-{
-	g_autoptr(ClimberApplication) app = NULL;
-	int ret;
+int main(int argc, char *argv[]) {
+  g_autoptr(ClimberApplication) app = NULL;
+  int ret;
+  bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
+  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+  textdomain(GETTEXT_PACKAGE);
 
-	bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
-	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-	textdomain (GETTEXT_PACKAGE);
+  app = climber_application_new(CLIMBER_APPLICATION_ID,
+                                G_APPLICATION_DEFAULT_FLAGS);
+  ret = g_application_run(G_APPLICATION(app), argc, argv);
 
-	app = climber_application_new ("xyz.wikylyu.climber", G_APPLICATION_FLAGS_NONE);
-	ret = g_application_run (G_APPLICATION (app), argc, argv);
-
-	return ret;
+  return ret;
 }
+

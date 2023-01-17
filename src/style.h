@@ -23,6 +23,9 @@
 
 G_BEGIN_DECLS
 
+/*
+ * Apply GtkStyleProvider to all children of widget, including itself of course.
+ */
 void gtk_widget_apply_css_all(GtkWidget *widget, GtkStyleProvider *provider);
 
 G_END_DECLS

@@ -23,8 +23,6 @@
 #include "climber-preferences-dialog.h"
 #include "style.h"
 
-static ClimberPreferencesDialog *instance = NULL;
-
 struct _ClimberPreferencesDialog {
   GtkDialog parent_instance;
 
@@ -32,6 +30,7 @@ struct _ClimberPreferencesDialog {
   GtkSpinButton *socks5_port;
   GtkSpinButton *http_port;
 };
+static ClimberPreferencesDialog *instance = NULL;
 
 G_DEFINE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
                     GTK_TYPE_DIALOG)
@@ -41,7 +40,8 @@ climber_preferences_dialog_class_init(ClimberPreferencesDialogClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
   gtk_widget_class_set_template_from_resource(
-      widget_class, "/xyz/wikylyu/climber/gtk/climber-preferences-dialog.ui");
+      widget_class,
+      CLIMBER_APPLICATION_PATH "/gtk/climber-preferences-dialog.ui");
   gtk_widget_class_bind_template_child(widget_class, ClimberPreferencesDialog,
                                        socks5_port);
   gtk_widget_class_bind_template_child(widget_class, ClimberPreferencesDialog,
@@ -57,7 +57,19 @@ static void climber_preferences_dialog_init(ClimberPreferencesDialog *self) {
  */
 static gboolean
 climber_preferences_dialog_confirm(ClimberPreferencesDialog *self) {
-  g_print("Confirm!\n");
+  GSettings *settings;
+  gint socks5_port = gtk_spin_button_get_value_as_int(self->socks5_port);
+  gint http_port = gtk_spin_button_get_value_as_int(self->http_port);
+  if (socks5_port < 0 || socks5_port > 65535 || http_port < 0 ||
+      http_port > 65535) {
+    return false;
+  } else if (socks5_port == http_port) {
+    return false;
+  }
+  settings = g_settings_new(CLIMBER_APPLICATION_ID);
+  g_settings_set_int(settings, "socks5-port", socks5_port);
+  g_settings_set_int(settings, "http-port", http_port);
+  g_object_unref(settings);
   return true;
 }
 
@@ -70,16 +82,17 @@ static void climber_preferences_dialog_response_handler(
     }
   }
   gtk_window_destroy(GTK_WINDOW(self));
-  instance = NULL;
+  if (self == instance) {
+    instance = NULL;
+  }
 }
 
 ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
   GtkCssProvider *css_provider;
   GObject *obj;
-
-  if (instance != NULL) {
-    return instance;
-  }
+  GSettings *settings;
+  gint socks5_port, http_port;
+  ClimberPreferencesDialog *dialog;
 
   css_provider = gtk_css_provider_new();
   obj = g_object_new(CLIMBER_TYPE_PREFERENCES_DIALOG, "use-header-bar", TRUE,
@@ -88,15 +101,29 @@ ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
   g_signal_connect(obj, "response",
                    G_CALLBACK(climber_preferences_dialog_response_handler),
                    NULL);
-  gtk_css_provider_load_from_resource(
-      css_provider, "/xyz/wikylyu/climber/gtk/climber-preferences-dialog.css");
+  gtk_css_provider_load_from_resource(css_provider, CLIMBER_APPLICATION_PATH
+                                      "/gtk/climber-preferences-dialog.css");
 
   gtk_widget_apply_css_all(GTK_WIDGET(obj), GTK_STYLE_PROVIDER(css_provider));
-  instance = CLIMBER_PREFERENCES_DIALOG(obj);
+  dialog = CLIMBER_PREFERENCES_DIALOG(obj);
 
-  gtk_spin_button_set_value(instance->socks5_port, 1080);
-  gtk_spin_button_set_value(instance->http_port, 1081);
+  settings = g_settings_new(CLIMBER_APPLICATION_ID);
 
-  return instance;
+  socks5_port = g_settings_get_int(settings, "socks5-port");
+  http_port = g_settings_get_int(settings, "http-port");
+
+  gtk_spin_button_set_value(dialog->socks5_port, socks5_port);
+  gtk_spin_button_set_value(dialog->http_port, http_port);
+
+  g_object_unref(settings);
+
+  return dialog;
+}
+
+void show_climber_preferences_dialog(GtkApplication *app) {
+  if (instance == NULL) {
+    instance = climber_preferences_dialog_new(app);
+  }
+  gtk_widget_set_visible(GTK_WIDGET(instance), TRUE);
 }
 

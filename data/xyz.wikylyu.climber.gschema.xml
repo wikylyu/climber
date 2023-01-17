@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="climber">
 	<schema id="xyz.wikylyu.climber" path="/xyz/wikylyu/climber/">
+	  <key name="socks5-port" type="i">
+	    <default>1080</default>
+	    <summary>SOCKS5 Port</summary>
+	  </key>
+		<key name="http-port" type="i">
+	    <default>1081</default>
+	    <summary>HTTP Port</summary>
+	  </key>
 	</schema>
 </schemalist>

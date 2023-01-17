@@ -12,6 +12,8 @@ config_h = configuration_data()
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 config_h.set_quoted('GETTEXT_PACKAGE', 'climber')
 config_h.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('localedir')))
+config_h.set_quoted('CLIMBER_APPLICATION_ID', 'xyz.wikylyu.climber')
+config_h.set_quoted('CLIMBER_APPLICATION_PATH', '/xyz/wikylyu/climber')
 configure_file(output: 'config.h', configuration: config_h)
 add_project_arguments(['-I' + meson.project_build_root()], language: 'c')
 

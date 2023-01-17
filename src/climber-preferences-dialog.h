@@ -30,5 +30,9 @@ G_DECLARE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
                      CLIMBER, PREFERENCES_DIALOG, GtkDialog)
 
 ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app);
+
+/* Open Preferences Dialog and only one dialog instance will be opened */
+void show_climber_preferences_dialog(GtkApplication *app);
+
 G_END_DECLS
 

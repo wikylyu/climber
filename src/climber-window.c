@@ -36,7 +36,7 @@ static void climber_window_class_init(ClimberWindowClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
   gtk_widget_class_set_template_from_resource(
-      widget_class, "/xyz/wikylyu/climber/gtk/climber-window.ui");
+      widget_class, CLIMBER_APPLICATION_PATH "/gtk/climber-window.ui");
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, header_bar);
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, label);
 }
