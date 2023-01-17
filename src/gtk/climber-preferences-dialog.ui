@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <template class="ClimberPreferencesDialog" parent="GtkDialog">
+    <property name="title" translatable="yes">Preferences</property>
+    <property name="destroy-with-parent">true</property>
+    <property name="resizable">false</property>
+    <child type="action">
+      <object class="GtkButton" id="button_cancel">
+        <property name="label">Cancel</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button_confirm">
+        <property name="label">Confirm</property>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="cancel">button_cancel</action-widget>
+      <action-widget response="ok" default="true">button_confirm</action-widget>
+    </action-widgets>
+    <child>
+      <object class="GtkBox">
+        <property name="name">vbox</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="name">hbox1</property>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="name">label1</property>
+                <property name="halign">start</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">SOCKS5 Port :</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="socks5_port">
+                <property name="name">socks5_port</property>
+                <property name="numeric">true</property>
+                <property name="climb-rate">1</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">0</property>
+                    <property name="upper">65535</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">1000</property>
+                    <property name="page-size">0</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">horizontal</property>
+            <property name="name">hbox2</property>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="name">label2</property>
+                <property name="halign">start</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">HTTP Port :</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="http_port">
+                <property name="name">http_port</property>
+                <property name="numeric">true</property>
+                <property name="climb-rate">1</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">0</property>
+                    <property name="upper">65535</property>
+                    <property name="step-increment">1</property>
+                    <property name="page-increment">1000</property>
+                    <property name="page-size">0</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

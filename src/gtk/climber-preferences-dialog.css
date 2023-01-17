@@ -1,0 +1,19 @@
+
+
+box#vbox{
+  font-size:16px;
+  padding:10px 20px;
+}
+
+box#vbox label{
+  margin-right:10px;
+  min-width: 110px;
+}
+
+box#vbox spinbutton#socks5_port,box#vbox spinbutton#http_port{
+  min-width:200px;
+}
+
+box#vbox box#hbox2{
+  margin-top:10px;
+}

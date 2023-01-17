@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "climber-application.h"
+#include "climber-preferences-dialog.h"
 #include "climber-window.h"
 
 struct _ClimberApplication {
@@ -87,9 +88,13 @@ static void climber_application_quit_action(GSimpleAction *action,
 static void climber_application_preference_action(GSimpleAction *action,
                                                   GVariant *parameter,
                                                   gpointer user_data) {
+  ClimberPreferencesDialog *dialog;
   ClimberApplication *self = user_data;
 
   g_assert(CLIMBER_IS_APPLICATION(self));
+
+  dialog = climber_preferences_dialog_new(GTK_APPLICATION(self));
+  gtk_widget_set_visible(GTK_WIDGET(dialog), TRUE);
 }
 
 static const GActionEntry app_actions[] = {
