@@ -1,4 +1,4 @@
-/* climber-preferences-dialog.h
+/* message.c
  *
  * Copyright 2023 Wiky Lyu
  *
@@ -18,25 +18,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#pragma once
+#include "message.h"
 
-#include <gtk/gtk.h>
+void show_message_dialog(GtkWindow *parent_window, GtkMessageType type,
+                         const char *format_message, ...) {
+  GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_MODAL;
+  va_list args;
+  GtkWidget *dialog;
+  va_start(args, format_message);
 
-G_BEGIN_DECLS
-
-#define CLIMBER_TYPE_PREFERENCES_DIALOG (climber_preferences_dialog_get_type())
-
-G_DECLARE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
-                     CLIMBER, PREFERENCES_DIALOG, GtkDialog)
-
-ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app);
-
-/* Open Preferences Dialog and only one dialog instance will be opened */
-void show_climber_preferences_dialog(GtkApplication *app);
-
-gint climber_preferences_dialog_get_socks5_port(
-    ClimberPreferencesDialog *dialog);
-gint climber_preferences_dialog_get_http_port(ClimberPreferencesDialog *dialog);
-
-G_END_DECLS
+  dialog = gtk_message_dialog_new(parent_window, flags, type, GTK_BUTTONS_OK,
+                                  format_message, args);
+  va_end(args);
+  g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
+  gtk_window_present(GTK_WINDOW(dialog));
+}
 

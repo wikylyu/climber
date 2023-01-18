@@ -30,7 +30,7 @@ struct _ClimberPreferencesDialog {
   GtkSpinButton *socks5_port;
   GtkSpinButton *http_port;
 };
-static ClimberPreferencesDialog *instance = NULL;
+/* static ClimberPreferencesDialog *instance = NULL; */
 
 G_DEFINE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
                     GTK_TYPE_DIALOG)
@@ -52,41 +52,6 @@ static void climber_preferences_dialog_init(ClimberPreferencesDialog *self) {
   gtk_widget_init_template(GTK_WIDGET(self));
 }
 
-/*
- * Returns FALSE if error occurs.
- */
-static gboolean
-climber_preferences_dialog_confirm(ClimberPreferencesDialog *self) {
-  GSettings *settings;
-  gint socks5_port = gtk_spin_button_get_value_as_int(self->socks5_port);
-  gint http_port = gtk_spin_button_get_value_as_int(self->http_port);
-  if (socks5_port < 0 || socks5_port > 65535 || http_port < 0 ||
-      http_port > 65535) {
-    return false;
-  } else if (socks5_port == http_port) {
-    return false;
-  }
-  settings = g_settings_new(CLIMBER_APPLICATION_ID);
-  g_settings_set_int(settings, "socks5-port", socks5_port);
-  g_settings_set_int(settings, "http-port", http_port);
-  g_object_unref(settings);
-  return true;
-}
-
-static void climber_preferences_dialog_response_handler(
-    ClimberPreferencesDialog *self, gint response_id, gpointer user_data) {
-
-  if (response_id == GTK_RESPONSE_OK) {
-    if (!climber_preferences_dialog_confirm(self)) {
-      return;
-    }
-  }
-  gtk_window_destroy(GTK_WINDOW(self));
-  if (self == instance) {
-    instance = NULL;
-  }
-}
-
 ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
   GtkCssProvider *css_provider;
   GObject *obj;
@@ -98,9 +63,7 @@ ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
   obj = g_object_new(CLIMBER_TYPE_PREFERENCES_DIALOG, "use-header-bar", TRUE,
                      "application", app, "modal", TRUE, "transient-for",
                      gtk_application_get_active_window(app), NULL);
-  g_signal_connect(obj, "response",
-                   G_CALLBACK(climber_preferences_dialog_response_handler),
-                   NULL);
+
   gtk_css_provider_load_from_resource(css_provider, CLIMBER_APPLICATION_PATH
                                       "/gtk/climber-preferences-dialog.css");
 
@@ -120,10 +83,12 @@ ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
   return dialog;
 }
 
-void show_climber_preferences_dialog(GtkApplication *app) {
-  if (instance == NULL) {
-    instance = climber_preferences_dialog_new(app);
-  }
-  gtk_widget_set_visible(GTK_WIDGET(instance), TRUE);
+gint climber_preferences_dialog_get_socks5_port(
+    ClimberPreferencesDialog *dialog) {
+  return gtk_spin_button_get_value_as_int(dialog->socks5_port);
+}
+gint climber_preferences_dialog_get_http_port(
+    ClimberPreferencesDialog *dialog) {
+  return gtk_spin_button_get_value_as_int(dialog->http_port);
 }
 

@@ -4,6 +4,7 @@ climber_sources = [
   'climber-window.c',
   'climber-preferences-dialog.c',
   'style.c',
+  'message.c',
 ]
 
 climber_deps = [
