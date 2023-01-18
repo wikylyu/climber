@@ -11,6 +11,23 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkHeaderBar" id="header_bar">
+            <property name="title-widget">
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="name">titlebox</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label" translatable="yes">Running</property>
+                    <property name="name">title</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSwitch">
+                    <property name="name">switch</property>
+                  </object>
+                </child>
+              </object>
+            </property>
             <child type="end">
               <object class="GtkMenuButton">
                 <property name="icon-name">open-menu-symbolic</property>
@@ -41,7 +58,7 @@
     <section>
       <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>
-        <attribute name="action">app.preferences</attribute>
+        <attribute name="action">win.preferences</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>

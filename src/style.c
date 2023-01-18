@@ -19,13 +19,20 @@
  */
 #include "style.h"
 
-void gtk_widget_apply_css_all(GtkWidget *widget, GtkStyleProvider *provider) {
+static void _gtk_widget_apply_css_all(GtkWidget *widget,
+                                      GtkStyleProvider *provider) {
   GtkWidget *child;
 
   gtk_style_context_add_provider(gtk_widget_get_style_context(widget), provider,
                                  GTK_STYLE_PROVIDER_PRIORITY_USER);
   for (child = gtk_widget_get_first_child(widget); child != NULL;
        child = gtk_widget_get_next_sibling(child))
-    gtk_widget_apply_css_all(child, provider);
+    _gtk_widget_apply_css_all(child, provider);
+}
+
+void gtk_widget_apply_css_all(GtkWidget *widget, const gchar *css_path) {
+  GtkCssProvider *css_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_resource(css_provider, css_path);
+  _gtk_widget_apply_css_all(widget, GTK_STYLE_PROVIDER(css_provider));
 }
 

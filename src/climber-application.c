@@ -28,17 +28,11 @@
 struct _ClimberApplication {
   AdwApplication parent_instance;
   ClimberWindow *window;
-  ClimberPreferencesDialog *preferences_dialog;
 };
 
 G_DEFINE_TYPE(ClimberApplication, climber_application, ADW_TYPE_APPLICATION)
 
 static void climber_application_finalize(GObject *object);
-/*
- * Save app preferences using GSettings
- */
-static void climber_application_save_preferences(gint socks5_port,
-                                                 gint http_port);
 
 ClimberApplication *climber_application_new(const char *application_id,
                                             GApplicationFlags flags) {
@@ -69,11 +63,6 @@ static void climber_application_class_init(ClimberApplicationClass *klass) {
 }
 
 static void climber_application_finalize(GObject *object) {
-  ClimberApplication *self = CLIMBER_APPLICATION(object);
-  if (self->preferences_dialog != NULL) {
-    gtk_window_destroy(GTK_WINDOW(self->preferences_dialog));
-    self->preferences_dialog = NULL;
-  }
   G_OBJECT_CLASS(climber_application_parent_class)->finalize(object);
 }
 
@@ -109,54 +98,9 @@ static void climber_application_quit_action(GSimpleAction *action,
   g_application_quit(G_APPLICATION(self));
 }
 
-static void climber_preferences_dialog_response_handler(
-    ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data) {
-
-  ClimberApplication *app = CLIMBER_APPLICATION(user_data);
-  if (response_id == GTK_RESPONSE_OK) {
-    gint socks5_port = climber_preferences_dialog_get_socks5_port(dialog);
-    gint http_port = climber_preferences_dialog_get_http_port(dialog);
-    if (socks5_port < 0 || socks5_port > 65535) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "Invalid SOCKS5 port: %d", socks5_port);
-    } else if (http_port < 0 || http_port > 65535) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "Invalid HTTP port: %d", http_port);
-    } else if (socks5_port == http_port && socks5_port != 0) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "SOCKS5 port and HTTP port cannot be the same");
-      return;
-    }
-    climber_application_save_preferences(socks5_port, http_port);
-  }
-  gtk_window_destroy(GTK_WINDOW(dialog));
-  app->preferences_dialog = NULL;
-}
-
-/*
- * Open preferences dialog
- */
-static void climber_application_preference_action(GSimpleAction *action,
-                                                  GVariant *parameter,
-                                                  gpointer user_data) {
-  ClimberApplication *self = user_data;
-
-  g_assert(CLIMBER_IS_APPLICATION(self));
-
-  if (self->preferences_dialog == NULL) {
-    self->preferences_dialog =
-        climber_preferences_dialog_new(GTK_APPLICATION(self));
-    g_signal_connect(G_OBJECT(self->preferences_dialog), "response",
-                     G_CALLBACK(climber_preferences_dialog_response_handler),
-                     self);
-  }
-  gtk_window_present(GTK_WINDOW(self->preferences_dialog));
-}
-
 static const GActionEntry app_actions[] = {
     {"quit", climber_application_quit_action},
     {"about", climber_application_about_action},
-    {"preferences", climber_application_preference_action},
 };
 
 static void climber_application_init(ClimberApplication *self) {
@@ -165,24 +109,12 @@ static void climber_application_init(ClimberApplication *self) {
   gtk_application_set_accels_for_action(GTK_APPLICATION(self), "app.quit",
                                         (const char *[]){"<primary>q", NULL});
   gtk_application_set_accels_for_action(GTK_APPLICATION(self),
-                                        "app.preferences",
+                                        "win.preferences",
                                         (const char *[]){"<primary>p", NULL});
   gtk_application_set_accels_for_action(GTK_APPLICATION(self), "win.new-server",
                                         (const char *[]){"<primary>n", NULL});
   gtk_application_set_accels_for_action(
       GTK_APPLICATION(self), "win.new-subscription",
       (const char *[]){"<primary><shift>n", NULL});
-}
-
-/*
- * Returns FALSE if error occurs.
- */
-static void climber_application_save_preferences(gint socks5_port,
-                                                 gint http_port) {
-  GSettings *settings;
-  settings = g_settings_new(CLIMBER_APPLICATION_ID);
-  g_settings_set_int(settings, "socks5-port", socks5_port);
-  g_settings_set_int(settings, "http-port", http_port);
-  g_object_unref(settings);
 }
 

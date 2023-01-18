@@ -50,24 +50,21 @@ climber_preferences_dialog_class_init(ClimberPreferencesDialogClass *klass) {
 
 static void climber_preferences_dialog_init(ClimberPreferencesDialog *self) {
   gtk_widget_init_template(GTK_WIDGET(self));
+
+  gtk_widget_apply_css_all(GTK_WIDGET(self), CLIMBER_APPLICATION_PATH
+                           "/gtk/climber-preferences-dialog.css");
 }
 
 ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app) {
-  GtkCssProvider *css_provider;
   GObject *obj;
   GSettings *settings;
   gint socks5_port, http_port;
   ClimberPreferencesDialog *dialog;
 
-  css_provider = gtk_css_provider_new();
   obj = g_object_new(CLIMBER_TYPE_PREFERENCES_DIALOG, "use-header-bar", TRUE,
                      "application", app, "modal", TRUE, "transient-for",
                      gtk_application_get_active_window(app), NULL);
 
-  gtk_css_provider_load_from_resource(css_provider, CLIMBER_APPLICATION_PATH
-                                      "/gtk/climber-preferences-dialog.css");
-
-  gtk_widget_apply_css_all(GTK_WIDGET(obj), GTK_STYLE_PROVIDER(css_provider));
   dialog = CLIMBER_PREFERENCES_DIALOG(obj);
 
   settings = g_settings_new(CLIMBER_APPLICATION_ID);
