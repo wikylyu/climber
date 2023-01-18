@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+  <requires lib="gtk" version="4.0"></requires>
+  <template class="ClimberServiceSwitch" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="name">box</property>
+    <child>
+      <object class="GtkLabel" id="label">
+        <property name="label" translatable="yes">Paused</property>
+        <property name="name">paused</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSwitch" id="swtch">
+        <property name="name">switch</property>
+      </object>
+    </child>
+  </template>
+</interface>

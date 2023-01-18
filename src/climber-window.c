@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "climber-preferences-dialog.h"
+#include "climber-service-switch.h"
 #include "climber-window.h"
 #include "message.h"
 #include "style.h"
@@ -32,6 +33,7 @@ struct _ClimberWindow {
   GtkHeaderBar *header_bar;
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
+  ClimberServiceSwitch *service_switch;
 };
 
 G_DEFINE_FINAL_TYPE(ClimberWindow, climber_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -121,6 +123,11 @@ static const GActionEntry win_actions[] = {
 
 static void climber_window_init(ClimberWindow *self) {
   gtk_widget_init_template(GTK_WIDGET(self));
+
+  self->service_switch = climber_service_switch_new();
+  gtk_header_bar_set_title_widget(self->header_bar,
+                                  GTK_WIDGET(self->service_switch));
+
   gtk_widget_apply_css_all(GTK_WIDGET(self),
                            CLIMBER_APPLICATION_PATH "/gtk/climber-window.css");
   g_action_map_add_action_entries(G_ACTION_MAP(self), win_actions,

@@ -2,9 +2,11 @@
 <gresources>
   <gresource prefix="/xyz/wikylyu/climber">
     <file preprocess="xml-stripblanks">gtk/climber-window.ui</file>
+    <file>gtk/climber-window.css</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">gtk/climber-preferences-dialog.ui</file>
     <file>gtk/climber-preferences-dialog.css</file>
-    <file>gtk/climber-window.css</file>
+    <file preprocess="xml-stripblanks">gtk/climber-service-switch.ui</file>
+    <file>gtk/climber-service-switch.css</file>
   </gresource>
 </gresources>

@@ -30,7 +30,6 @@ struct _ClimberPreferencesDialog {
   GtkSpinButton *socks5_port;
   GtkSpinButton *http_port;
 };
-/* static ClimberPreferencesDialog *instance = NULL; */
 
 G_DEFINE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
                     GTK_TYPE_DIALOG)

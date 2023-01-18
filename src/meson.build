@@ -1,10 +1,11 @@
 climber_sources = [
   'main.c',
+  'style.c',
+  'message.c',
   'climber-application.c',
   'climber-window.c',
   'climber-preferences-dialog.c',
-  'style.c',
-  'message.c',
+  'climber-service-swtich.c',
 ]
 
 climber_deps = [
