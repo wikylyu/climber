@@ -23,6 +23,7 @@
 #include "climber-preferences-dialog.h"
 #include "climber-service-switch.h"
 #include "climber-window.h"
+#include "io/climber-service.h"
 #include "message.h"
 #include "style.h"
 
@@ -34,9 +35,14 @@ struct _ClimberWindow {
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
   ClimberServiceSwitch *service_switch;
+
+  ClimberService *service;
 };
 
 G_DEFINE_FINAL_TYPE(ClimberWindow, climber_window, ADW_TYPE_APPLICATION_WINDOW)
+
+static void climber_service_switch_state_changed_handler(
+    ClimberServiceSwitch *widget, gboolean state, gpointer user_data);
 
 static void climber_window_class_init(ClimberWindowClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
@@ -122,15 +128,35 @@ static const GActionEntry win_actions[] = {
 };
 
 static void climber_window_init(ClimberWindow *self) {
+  GSettings *settings;
   gtk_widget_init_template(GTK_WIDGET(self));
 
   self->service_switch = climber_service_switch_new();
   gtk_header_bar_set_title_widget(self->header_bar,
                                   GTK_WIDGET(self->service_switch));
+  g_signal_connect(G_OBJECT(self->service_switch), "state-changed",
+                   G_CALLBACK(climber_service_switch_state_changed_handler),
+                   self);
 
   gtk_widget_apply_css_all(GTK_WIDGET(self),
                            CLIMBER_APPLICATION_PATH "/gtk/climber-window.css");
   g_action_map_add_action_entries(G_ACTION_MAP(self), win_actions,
                                   G_N_ELEMENTS(win_actions), self);
+
+  settings = g_settings_new(CLIMBER_APPLICATION_ID);
+  self->service =
+      climber_service_new(g_settings_get_int(settings, "socks5-port"),
+                          g_settings_get_int(settings, "http-port"));
+  g_object_unref(settings);
+}
+
+static void climber_service_switch_state_changed_handler(
+    ClimberServiceSwitch *widget, gboolean state, gpointer user_data) {
+  ClimberWindow *window = CLIMBER_WINDOW(user_data);
+  if (state) {
+    climber_service_run(window->service);
+  } else {
+    climber_service_pause(window->service);
+  }
 }
 

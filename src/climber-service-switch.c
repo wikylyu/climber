@@ -40,6 +40,13 @@ climber_service_switch_class_init(ClimberServiceSwitchClass *klass) {
                                        label);
   gtk_widget_class_bind_template_child(widget_class, ClimberServiceSwitch,
                                        swtch);
+
+  g_signal_new("state-changed", G_TYPE_FROM_CLASS(klass),
+               G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+               0, /* class offset */
+               NULL /* accumulator */, NULL /* accumulator data */,
+               NULL /* C marshaller */, G_TYPE_NONE /* return_type */,
+               1 /* n_params */, G_TYPE_BOOLEAN /* param_types */);
 }
 
 static void climber_service_switch_update_state(ClimberServiceSwitch *self,
@@ -51,6 +58,7 @@ static void climber_service_switch_update_state(ClimberServiceSwitch *self,
     gtk_widget_set_name(GTK_WIDGET(self->label), "paused");
     gtk_label_set_label(self->label, "Paused");
   }
+  g_signal_emit_by_name(self, "state-changed", state);
 }
 
 static void climber_service_switch_state_set_handler(GtkSwitch *widget,
@@ -59,7 +67,6 @@ static void climber_service_switch_state_set_handler(GtkSwitch *widget,
   ClimberServiceSwitch *self = CLIMBER_SERVICE_SWITCH(user_data);
 
   climber_service_switch_update_state(self, state);
-  g_print("%b\n", state);
 }
 
 static void climber_service_switch_init(ClimberServiceSwitch *self) {

@@ -5,7 +5,8 @@ climber_sources = [
   'climber-application.c',
   'climber-window.c',
   'climber-preferences-dialog.c',
-  'climber-service-swtich.c',
+  'climber-service-switch.c',
+  'io/climber-service.c',
 ]
 
 climber_deps = [
