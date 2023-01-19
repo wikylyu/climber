@@ -83,6 +83,17 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="GtkInfoBar">
+            <property name="message-type">info</property>
+            <property name="name">infobar</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label" translatable="yes">Zero means not to use that service.</property>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
   </template>

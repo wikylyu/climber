@@ -35,6 +35,8 @@ struct _ClimberWindow {
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
   ClimberServiceSwitch *service_switch;
+  GtkLabel *socks5_label;
+  GtkLabel *http_label;
 
   ClimberService *service;
 };
@@ -43,6 +45,7 @@ G_DEFINE_FINAL_TYPE(ClimberWindow, climber_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void climber_service_switch_state_changed_handler(
     ClimberServiceSwitch *widget, gboolean state, gpointer user_data);
+static void climber_window_finalize(GObject *object);
 
 static void climber_window_class_init(ClimberWindowClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
@@ -51,6 +54,11 @@ static void climber_window_class_init(ClimberWindowClass *klass) {
       widget_class, CLIMBER_APPLICATION_PATH "/gtk/climber-window.ui");
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, header_bar);
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, label);
+  gtk_widget_class_bind_template_child(widget_class, ClimberWindow,
+                                       socks5_label);
+  gtk_widget_class_bind_template_child(widget_class, ClimberWindow, http_label);
+
+  G_OBJECT_CLASS(widget_class)->finalize = climber_window_finalize;
 }
 
 static void climber_window_new_server_action(GSimpleAction *action,
@@ -96,6 +104,18 @@ static void climber_preferences_dialog_response_handler(
       return;
     }
     climber_window_save_preferences(socks5_port, http_port);
+    if (climber_service_switch_get_state(window->service_switch)) {
+      /* When the service is running, restart it */
+      climber_service_restart(window->service, socks5_port, http_port);
+    } else {
+      climber_service_set_socks5_port(window->service, socks5_port);
+      climber_service_set_http_port(window->service, http_port);
+    }
+
+    gtk_label_set_label(window->socks5_label,
+                        g_strdup_printf("SOCKS5 port: %d", socks5_port));
+    gtk_label_set_label(window->http_label,
+                        g_strdup_printf("HTTP port: %d", http_port));
   }
   gtk_window_destroy(GTK_WINDOW(dialog));
   window->preferences_dialog = NULL;
@@ -129,6 +149,8 @@ static const GActionEntry win_actions[] = {
 
 static void climber_window_init(ClimberWindow *self) {
   GSettings *settings;
+  gint socks5_port;
+  gint http_port;
   gtk_widget_init_template(GTK_WIDGET(self));
 
   self->service_switch = climber_service_switch_new();
@@ -144,10 +166,21 @@ static void climber_window_init(ClimberWindow *self) {
                                   G_N_ELEMENTS(win_actions), self);
 
   settings = g_settings_new(CLIMBER_APPLICATION_ID);
-  self->service =
-      climber_service_new(g_settings_get_int(settings, "socks5-port"),
-                          g_settings_get_int(settings, "http-port"));
+  socks5_port = g_settings_get_int(settings, "socks5-port");
+  http_port = g_settings_get_int(settings, "http-port");
+  self->service = climber_service_new(socks5_port, http_port);
   g_object_unref(settings);
+
+  gtk_label_set_label(self->socks5_label,
+                      g_strdup_printf("SOCKS5 port: %d", socks5_port));
+  gtk_label_set_label(self->http_label,
+                      g_strdup_printf("HTTP port: %d", http_port));
+}
+
+static void climber_window_finalize(GObject *object) {
+  ClimberWindow *self = CLIMBER_WINDOW(object);
+  g_object_unref(self->service);
+  G_OBJECT_CLASS(climber_window_parent_class)->finalize(object);
 }
 
 static void climber_service_switch_state_changed_handler(

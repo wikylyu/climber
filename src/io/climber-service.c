@@ -25,23 +25,133 @@ struct _ClimberService {
 
   gint socks5_port;
   gint http_port;
+
+  GSocketService *socks5_service;
+  GSocketService *http_service;
 };
 
 G_DEFINE_FINAL_TYPE(ClimberService, climber_service, G_TYPE_OBJECT)
 
-static void climber_service_class_init(ClimberServiceClass *klass) {}
+static void climber_service_finalize(GObject *object) {
+  ClimberService *self = CLIMBER_SERVICE(object);
+  if (self->socks5_service) {
+    g_object_unref(self->socks5_service);
+  }
+  if (self->http_service) {
+    g_object_unref(self->http_service);
+  }
+  G_OBJECT_CLASS(climber_service_parent_class)->finalize(object);
+}
+
+static void climber_service_class_init(ClimberServiceClass *klass) {
+  G_OBJECT_CLASS(klass)->finalize = climber_service_finalize;
+}
 
 static void climber_service_init(ClimberService *self) {}
 
 ClimberService *climber_service_new(gint socks5_port, gint http_port) {
   ClimberService *service =
       CLIMBER_SERVICE(g_object_new(CLIMBER_TYPE_SERVICE, NULL));
+
   service->socks5_port = socks5_port;
   service->http_port = http_port;
+  service->socks5_service = NULL;
+  service->http_service = NULL;
   return service;
 }
 
-void climber_service_run(ClimberService *service) { g_print("running\n"); }
+static void climber_service_run_socks5(ClimberService *self) {
+  GError *error = NULL;
+  if (self->socks5_port <= 0) {
+    return;
+  }
 
-void climber_service_pause(ClimberService *service) { g_print("paused\n"); }
+  self->socks5_service = g_threaded_socket_service_new(-1);
+  if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->socks5_service),
+                                       (guint16)(self->socks5_port), NULL,
+                                       &error)) {
+    g_warning("%s", error->message);
+    g_error_free(error);
+    g_object_unref(self->socks5_service);
+    self->socks5_service = NULL;
+  } else {
+    g_socket_service_start(G_SOCKET_SERVICE(self->socks5_service));
+    g_info("SOCKS5 listening on %d", self->socks5_port);
+  }
+}
+
+static void climber_service_run_http(ClimberService *self) {
+  GError *error = NULL;
+  if (self->http_port <= 0) {
+    return;
+  }
+
+  self->http_service = g_threaded_socket_service_new(-1);
+  if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->http_service),
+                                       (guint16)(self->http_port), NULL,
+                                       &error)) {
+    g_warning("%s", error->message);
+    g_error_free(error);
+    g_object_unref(self->http_service);
+    self->http_service = NULL;
+  } else {
+    g_socket_service_start(G_SOCKET_SERVICE(self->http_service));
+    g_info("HTTP listening on %d", self->http_port);
+  }
+}
+
+void climber_service_run(ClimberService *self) {
+  if (self->socks5_service != NULL || self->http_service != NULL) {
+    g_debug("service already running");
+    return;
+  }
+  climber_service_run_socks5(self);
+
+  climber_service_run_http(self);
+}
+
+static void climber_service_stop_socks5(ClimberService *self) {
+  if (self->socks5_service != NULL) {
+    g_socket_service_stop(G_SOCKET_SERVICE(self->socks5_service));
+    g_socket_listener_close(G_SOCKET_LISTENER(self->socks5_service));
+    g_object_unref(self->socks5_service);
+    self->socks5_service = NULL;
+  }
+}
+
+static void climber_service_stop_http(ClimberService *self) {
+  if (self->http_service) {
+    g_socket_service_stop(G_SOCKET_SERVICE(self->http_service));
+    g_socket_listener_close(G_SOCKET_LISTENER(self->http_service));
+    g_object_unref(self->http_service);
+    self->http_service = NULL;
+  }
+}
+
+void climber_service_pause(ClimberService *self) {
+  climber_service_stop_socks5(self);
+  climber_service_stop_http(self);
+}
+
+void climber_service_restart(ClimberService *self, gint socks5_port,
+                             gint http_port) {
+  if (self->socks5_port != socks5_port) {
+    climber_service_stop_socks5(self);
+    self->socks5_port = socks5_port;
+    climber_service_run_socks5(self);
+  }
+  if (self->http_port != http_port) {
+    climber_service_stop_http(self);
+    self->http_port = http_port;
+    climber_service_run_http(self);
+  }
+}
+
+void climber_service_set_socks5_port(ClimberService *service,
+                                     gint socks5_port) {
+  service->socks5_port = socks5_port;
+}
+void climber_service_set_http_port(ClimberService *service, gint http_port) {
+  service->http_port = http_port;
+}
 

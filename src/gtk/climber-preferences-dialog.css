@@ -17,3 +17,8 @@ box#vbox spinbutton#socks5_port,box#vbox spinbutton#http_port{
 box#vbox box#hbox2{
   margin-top:10px;
 }
+
+box#vbox infobar#infobar{
+  margin-top:10px;
+}
+
