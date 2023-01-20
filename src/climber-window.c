@@ -35,6 +35,7 @@ struct _ClimberWindow {
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
   ClimberServiceSwitch *service_switch;
+  GtkTextView *logview;
   GtkLabel *socks5_label;
   GtkLabel *http_label;
 
@@ -45,6 +46,9 @@ G_DEFINE_FINAL_TYPE(ClimberWindow, climber_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void climber_service_switch_state_changed_handler(
     ClimberServiceSwitch *widget, gboolean state, gpointer user_data);
+static void climber_service_log_handler(ClimberService *service,
+                                        const gchar *message,
+                                        gpointer user_data);
 static void climber_window_finalize(GObject *object);
 
 static void climber_window_class_init(ClimberWindowClass *klass) {
@@ -57,6 +61,7 @@ static void climber_window_class_init(ClimberWindowClass *klass) {
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow,
                                        socks5_label);
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, http_label);
+  gtk_widget_class_bind_template_child(widget_class, ClimberWindow, logview);
 
   G_OBJECT_CLASS(widget_class)->finalize = climber_window_finalize;
 }
@@ -83,6 +88,17 @@ static void climber_window_save_preferences(gint socks5_port, gint http_port) {
   g_settings_set_int(settings, "socks5-port", socks5_port);
   g_settings_set_int(settings, "http-port", http_port);
   g_object_unref(settings);
+}
+
+static void climber_window_update_statusbar(ClimberWindow *self,
+                                            gint socks5_port, gint http_port) {
+  gchar strbuf[1024];
+  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "SOCKS5 port: %d",
+             socks5_port);
+  gtk_label_set_label(self->socks5_label, strbuf);
+  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "HTTP port: %d",
+             http_port);
+  gtk_label_set_label(self->http_label, strbuf);
 }
 
 static void climber_preferences_dialog_response_handler(
@@ -112,10 +128,7 @@ static void climber_preferences_dialog_response_handler(
       climber_service_set_http_port(window->service, http_port);
     }
 
-    gtk_label_set_label(window->socks5_label,
-                        g_strdup_printf("SOCKS5 port: %d", socks5_port));
-    gtk_label_set_label(window->http_label,
-                        g_strdup_printf("HTTP port: %d", http_port));
+    climber_window_update_statusbar(window, socks5_port, http_port);
   }
   gtk_window_destroy(GTK_WINDOW(dialog));
   window->preferences_dialog = NULL;
@@ -151,6 +164,7 @@ static void climber_window_init(ClimberWindow *self) {
   GSettings *settings;
   gint socks5_port;
   gint http_port;
+
   gtk_widget_init_template(GTK_WIDGET(self));
 
   self->service_switch = climber_service_switch_new();
@@ -169,12 +183,11 @@ static void climber_window_init(ClimberWindow *self) {
   socks5_port = g_settings_get_int(settings, "socks5-port");
   http_port = g_settings_get_int(settings, "http-port");
   self->service = climber_service_new(socks5_port, http_port);
+  g_signal_connect(G_OBJECT(self->service), "log",
+                   G_CALLBACK(climber_service_log_handler), self);
   g_object_unref(settings);
 
-  gtk_label_set_label(self->socks5_label,
-                      g_strdup_printf("SOCKS5 port: %d", socks5_port));
-  gtk_label_set_label(self->http_label,
-                      g_strdup_printf("HTTP port: %d", http_port));
+  climber_window_update_statusbar(self, socks5_port, http_port);
 }
 
 static void climber_window_finalize(GObject *object) {
@@ -191,5 +204,27 @@ static void climber_service_switch_state_changed_handler(
   } else {
     climber_service_pause(window->service);
   }
+}
+
+static void climber_service_log_handler(ClimberService *service,
+                                        const gchar *message,
+                                        gpointer user_data) {
+  gchar strbuf[2048];
+  GtkTextIter iter;
+  GtkTextMark *mark;
+  GDateTime *datetime;
+  ClimberWindow *self = CLIMBER_WINDOW(user_data);
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(self->logview);
+
+  gtk_text_buffer_get_iter_at_offset(buffer, &iter, -1);
+
+  datetime = g_date_time_new_now_local();
+  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "[%02d:%02d:%02d] %s\n",
+             g_date_time_get_hour(datetime), g_date_time_get_minute(datetime),
+             g_date_time_get_second(datetime), message);
+  g_date_time_unref(datetime);
+  gtk_text_buffer_insert(buffer, &iter, strbuf, -1);
+  mark = gtk_text_buffer_create_mark(buffer, "end", &iter, FALSE);
+  gtk_text_view_scroll_mark_onscreen(self->logview, mark);
 }
 

@@ -9,3 +9,8 @@ box#statusbar{
 box#statusbar label#http{
   margin-left:10px;
 }
+
+textview#logview{
+  padding: 5px 5px 5px 5px;
+  font-style:italic;
+}

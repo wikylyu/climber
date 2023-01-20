@@ -32,6 +32,8 @@ struct _ClimberService {
 
 G_DEFINE_FINAL_TYPE(ClimberService, climber_service, G_TYPE_OBJECT)
 
+static void climber_service_emit_log(ClimberService *self, gchar *format, ...);
+
 static void climber_service_finalize(GObject *object) {
   ClimberService *self = CLIMBER_SERVICE(object);
   if (self->socks5_service) {
@@ -45,6 +47,13 @@ static void climber_service_finalize(GObject *object) {
 
 static void climber_service_class_init(ClimberServiceClass *klass) {
   G_OBJECT_CLASS(klass)->finalize = climber_service_finalize;
+
+  g_signal_new("log", G_TYPE_FROM_CLASS(klass),
+               G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+               0, /* class offset */
+               NULL /* accumulator */, NULL /* accumulator data */,
+               NULL /* C marshaller */, G_TYPE_NONE /* return_type */,
+               1 /* n_params */, G_TYPE_STRING /* param_types */);
 }
 
 static void climber_service_init(ClimberService *self) {}
@@ -70,13 +79,15 @@ static void climber_service_run_socks5(ClimberService *self) {
   if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->socks5_service),
                                        (guint16)(self->socks5_port), NULL,
                                        &error)) {
-    g_warning("%s", error->message);
+    climber_service_emit_log(self, "failed to start SOCKS5 proxy: %s",
+                             error->message);
     g_error_free(error);
     g_object_unref(self->socks5_service);
     self->socks5_service = NULL;
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->socks5_service));
-    g_info("SOCKS5 listening on %d", self->socks5_port);
+    climber_service_emit_log(self, "SOCKS5 proxy started on port %d",
+                             self->socks5_port);
   }
 }
 
@@ -90,13 +101,16 @@ static void climber_service_run_http(ClimberService *self) {
   if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->http_service),
                                        (guint16)(self->http_port), NULL,
                                        &error)) {
-    g_warning("%s", error->message);
+    climber_service_emit_log(self, "failed to start HTTP proxy: %s",
+                             error->message);
     g_error_free(error);
     g_object_unref(self->http_service);
     self->http_service = NULL;
+
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->http_service));
-    g_info("HTTP listening on %d", self->http_port);
+    climber_service_emit_log(self, "HTTP proxy started on port %d",
+                             self->http_port);
   }
 }
 
@@ -106,12 +120,12 @@ void climber_service_run(ClimberService *self) {
     return;
   }
   climber_service_run_socks5(self);
-
   climber_service_run_http(self);
 }
 
 static void climber_service_stop_socks5(ClimberService *self) {
   if (self->socks5_service != NULL) {
+    climber_service_emit_log(self, "SOCKS5 proxy stopped");
     g_socket_service_stop(G_SOCKET_SERVICE(self->socks5_service));
     g_socket_listener_close(G_SOCKET_LISTENER(self->socks5_service));
     g_object_unref(self->socks5_service);
@@ -121,6 +135,7 @@ static void climber_service_stop_socks5(ClimberService *self) {
 
 static void climber_service_stop_http(ClimberService *self) {
   if (self->http_service) {
+    climber_service_emit_log(self, "HTTP proxy stopped");
     g_socket_service_stop(G_SOCKET_SERVICE(self->http_service));
     g_socket_listener_close(G_SOCKET_LISTENER(self->http_service));
     g_object_unref(self->http_service);
@@ -153,5 +168,16 @@ void climber_service_set_socks5_port(ClimberService *service,
 }
 void climber_service_set_http_port(ClimberService *service, gint http_port) {
   service->http_port = http_port;
+}
+
+static void climber_service_emit_log(ClimberService *self, gchar *format, ...) {
+  gchar strbuf[1024];
+  va_list args;
+  va_start(args, format);
+
+  g_vsnprintf(strbuf, sizeof(strbuf) / sizeof(gchar), format, args);
+  va_end(args);
+
+  g_signal_emit_by_name(self, "log", strbuf);
 }
 
