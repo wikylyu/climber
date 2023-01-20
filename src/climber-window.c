@@ -223,7 +223,7 @@ static void climber_service_log_handler(ClimberService *service,
              g_date_time_get_hour(datetime), g_date_time_get_minute(datetime),
              g_date_time_get_second(datetime), message);
   g_date_time_unref(datetime);
-  gtk_text_buffer_insert(buffer, &iter, strbuf, -1);
+  gtk_text_buffer_insert_markup(buffer, &iter, strbuf, -1);
   mark = gtk_text_buffer_create_mark(buffer, "end", &iter, FALSE);
   gtk_text_view_scroll_mark_onscreen(self->logview, mark);
 }

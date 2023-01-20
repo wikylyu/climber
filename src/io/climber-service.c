@@ -80,8 +80,9 @@ static void climber_service_run_socks5(ClimberService *self) {
   if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->socks5_service),
                                        (guint16)(self->socks5_port), NULL,
                                        &error)) {
-    climber_service_emit_log(self, "failed to start SOCKS5 proxy: %s",
-                             error->message);
+    climber_service_emit_log(
+        self, "<span color=\"red\">failed to start SOCKS5 proxy: %s</span>",
+        error->message);
     g_error_free(error);
     g_object_unref(self->socks5_service);
     self->socks5_service = NULL;
@@ -102,8 +103,9 @@ static void climber_service_run_http(ClimberService *self) {
   if (!g_socket_listener_add_inet_port(G_SOCKET_LISTENER(self->http_service),
                                        (guint16)(self->http_port), NULL,
                                        &error)) {
-    climber_service_emit_log(self, "failed to start HTTP proxy: %s",
-                             error->message);
+    climber_service_emit_log(
+        self, "<span color=\"red\">failed to start HTTP proxy: %s</span>",
+        error->message);
     g_error_free(error);
     g_object_unref(self->http_service);
     self->http_service = NULL;
