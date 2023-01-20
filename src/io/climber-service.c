@@ -32,7 +32,8 @@ struct _ClimberService {
 
 G_DEFINE_FINAL_TYPE(ClimberService, climber_service, G_TYPE_OBJECT)
 
-static void climber_service_emit_log(ClimberService *self, gchar *format, ...);
+static void climber_service_emit_log(ClimberService *self, const gchar *format,
+                                     ...);
 
 static void climber_service_finalize(GObject *object) {
   ClimberService *self = CLIMBER_SERVICE(object);
@@ -151,11 +152,13 @@ void climber_service_pause(ClimberService *self) {
 void climber_service_restart(ClimberService *self, gint socks5_port,
                              gint http_port) {
   if (self->socks5_port != socks5_port) {
+    climber_service_emit_log(self, "restarting socks5 proxy");
     climber_service_stop_socks5(self);
     self->socks5_port = socks5_port;
     climber_service_run_socks5(self);
   }
   if (self->http_port != http_port) {
+    climber_service_emit_log(self, "restarting http proxy");
     climber_service_stop_http(self);
     self->http_port = http_port;
     climber_service_run_http(self);
@@ -170,7 +173,8 @@ void climber_service_set_http_port(ClimberService *service, gint http_port) {
   service->http_port = http_port;
 }
 
-static void climber_service_emit_log(ClimberService *self, gchar *format, ...) {
+static void climber_service_emit_log(ClimberService *self, const gchar *format,
+                                     ...) {
   gchar strbuf[1024];
   va_list args;
   va_start(args, format);
