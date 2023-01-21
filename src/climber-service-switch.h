@@ -36,4 +36,3 @@ void climber_service_switch_set_state(ClimberServiceSwitch *service_switch,
 gboolean climber_service_switch_get_state(ClimberServiceSwitch *service_switch);
 
 G_END_DECLS
-

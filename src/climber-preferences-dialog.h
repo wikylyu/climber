@@ -39,4 +39,3 @@ gint climber_preferences_dialog_get_socks5_port(
 gint climber_preferences_dialog_get_http_port(ClimberPreferencesDialog *dialog);
 
 G_END_DECLS
-

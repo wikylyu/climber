@@ -26,6 +26,7 @@ G_BEGIN_DECLS
 
 #define CLIMBER_TYPE_WINDOW (climber_window_get_type())
 
-G_DECLARE_FINAL_TYPE (ClimberWindow, climber_window, CLIMBER, WINDOW, AdwApplicationWindow)
+G_DECLARE_FINAL_TYPE(ClimberWindow, climber_window, CLIMBER, WINDOW,
+                     AdwApplicationWindow)
 
 G_END_DECLS

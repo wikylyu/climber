@@ -117,4 +117,3 @@ static void climber_application_init(ClimberApplication *self) {
       GTK_APPLICATION(self), "win.new-subscription",
       (const char *[]){"<primary><shift>n", NULL});
 }
-

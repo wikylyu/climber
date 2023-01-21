@@ -26,9 +26,10 @@ G_BEGIN_DECLS
 
 #define CLIMBER_TYPE_APPLICATION (climber_application_get_type())
 
-G_DECLARE_FINAL_TYPE (ClimberApplication, climber_application, CLIMBER, APPLICATION, AdwApplication)
+G_DECLARE_FINAL_TYPE(ClimberApplication, climber_application, CLIMBER,
+                     APPLICATION, AdwApplication)
 
-ClimberApplication *climber_application_new (const char        *application_id,
-                                             GApplicationFlags  flags);
+ClimberApplication *climber_application_new(const char *application_id,
+                                            GApplicationFlags flags);
 
 G_END_DECLS

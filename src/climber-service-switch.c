@@ -94,4 +94,3 @@ void climber_service_switch_set_state(ClimberServiceSwitch *self,
 gboolean climber_service_switch_get_state(ClimberServiceSwitch *self) {
   return gtk_switch_get_state(self->swtch);
 }
-

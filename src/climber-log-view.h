@@ -33,4 +33,3 @@ void climber_log_view_insert_markup(ClimberLogView *logview,
                                     const gchar *markup);
 
 G_END_DECLS
-

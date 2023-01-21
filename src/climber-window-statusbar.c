@@ -61,4 +61,3 @@ void climber_window_statusbar_update(ClimberWindowStatusbar *self,
              http_port);
   gtk_label_set_markup(self->http_label, strbuf);
 }
-

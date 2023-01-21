@@ -33,4 +33,3 @@ void climber_window_statusbar_update(ClimberWindowStatusbar *statusbar,
                                      gint socks5_port, gint http_port);
 
 G_END_DECLS
-

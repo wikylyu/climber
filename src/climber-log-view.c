@@ -63,4 +63,3 @@ void climber_log_view_insert_markup(ClimberLogView *self,
   mark = gtk_text_buffer_create_mark(buffer, "end", &iter, FALSE);
   gtk_text_view_scroll_mark_onscreen(self->textview, mark);
 }
-

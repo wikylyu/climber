@@ -35,4 +35,3 @@ void gtk_widget_apply_css_all(GtkWidget *widget, const gchar *css_path) {
   gtk_css_provider_load_from_resource(css_provider, css_path);
   _gtk_widget_apply_css_all(widget, GTK_STYLE_PROVIDER(css_provider));
 }
-

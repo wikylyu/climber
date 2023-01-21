@@ -29,4 +29,3 @@ G_BEGIN_DECLS
 void gtk_widget_apply_css_all(GtkWidget *widget, const gchar *css_path);
 
 G_END_DECLS
-

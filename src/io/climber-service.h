@@ -53,4 +53,3 @@ void climber_service_set_socks5_port(ClimberService *service, gint socks5_port);
 void climber_service_set_http_port(ClimberService *service, gint http_port);
 
 G_END_DECLS
-

@@ -33,4 +33,3 @@ void show_message_dialog(GtkWindow *parent_window, GtkMessageType type,
   g_signal_connect(dialog, "response", G_CALLBACK(gtk_window_destroy), NULL);
   gtk_window_present(GTK_WINDOW(dialog));
 }
-

@@ -201,4 +201,3 @@ static void climber_service_log_handler(ClimberService *service,
   ClimberWindow *self = CLIMBER_WINDOW(user_data);
   climber_log_view_insert_markup(self->logview, message);
 }
-

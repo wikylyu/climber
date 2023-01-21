@@ -1,4 +1,4 @@
-/* message.h
+/* climber-tunnel.h
  *
  * Copyright 2023 Wiky Lyu
  *
@@ -17,13 +17,23 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+
 #pragma once
 
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-void show_message_dialog(GtkWindow *parent_window, GtkMessageType type,
-                         const char *format_message, ...);
+#define CLIMBER_TYPE_TUNNEL (climber_tunnel_get_type())
+
+G_DECLARE_FINAL_TYPE(ClimberTunnel, climber_tunnel, CLIMBER, TUNNEL, GObject)
+
+ClimberTunnel *climber_tunnel_new(GSocketConnection *client_conn,
+                                  GSocketConnection *remote_conn);
+
+GSocketConnection *climber_tunnel_get_client_conn(ClimberTunnel *tunnel);
+GSocketConnection *climber_tunnel_get_remote_conn(ClimberTunnel *tunnel);
+
+void climber_tunnel_close(ClimberTunnel *tunnel);
 
 G_END_DECLS
