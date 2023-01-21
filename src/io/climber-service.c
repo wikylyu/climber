@@ -88,8 +88,9 @@ static void climber_service_run_socks5(ClimberService *self) {
     self->socks5_service = NULL;
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->socks5_service));
-    climber_service_emit_log(self, "SOCKS5 proxy started on port %d",
-                             self->socks5_port);
+    climber_service_emit_log(
+        self, "SOCKS5 proxy started on port <span color=\"green\">%d</span>",
+        self->socks5_port);
   }
 }
 
@@ -112,8 +113,9 @@ static void climber_service_run_http(ClimberService *self) {
 
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->http_service));
-    climber_service_emit_log(self, "HTTP proxy started on port %d",
-                             self->http_port);
+    climber_service_emit_log(
+        self, "HTTP proxy started on port <span color=\"green\">%d</span>",
+        self->http_port);
   }
 }
 
@@ -154,13 +156,13 @@ void climber_service_pause(ClimberService *self) {
 void climber_service_restart(ClimberService *self, gint socks5_port,
                              gint http_port) {
   if (self->socks5_port != socks5_port) {
-    climber_service_emit_log(self, "restarting socks5 proxy");
+    climber_service_emit_log(self, "restarting SOCKS5 proxy");
     climber_service_stop_socks5(self);
     self->socks5_port = socks5_port;
     climber_service_run_socks5(self);
   }
   if (self->http_port != http_port) {
-    climber_service_emit_log(self, "restarting http proxy");
+    climber_service_emit_log(self, "restarting HTTP proxy");
     climber_service_stop_http(self);
     self->http_port = http_port;
     climber_service_run_http(self);

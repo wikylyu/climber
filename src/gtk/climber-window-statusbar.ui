@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <template class="ClimberWindowStatusbar" parent="GtkBox">
+    <property name="name">statusbar</property>
+    <property name="orientation">horizontal</property>
+    <child>
+      <object class="GtkLabel" id="socks5_label">
+        <property name="label">SOCKS5 port: 10801</property>
+        <property name="name">socks5_label</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="http_label">
+        <property name="label">HTTP port: 10811</property>
+        <property name="name">http_label</property>
+      </object>
+    </child>
+  </template>
+</interface>

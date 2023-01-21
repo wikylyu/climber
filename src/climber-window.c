@@ -23,6 +23,7 @@
 #include "climber-log-view.h"
 #include "climber-preferences-dialog.h"
 #include "climber-service-switch.h"
+#include "climber-window-statusbar.h"
 #include "climber-window.h"
 #include "io/climber-service.h"
 #include "message.h"
@@ -37,8 +38,7 @@ struct _ClimberWindow {
   ClimberPreferencesDialog *preferences_dialog;
   ClimberServiceSwitch *service_switch;
   ClimberLogView *logview;
-  GtkLabel *socks5_label;
-  GtkLabel *http_label;
+  ClimberWindowStatusbar *statusbar;
 
   ClimberService *service;
 };
@@ -59,9 +59,7 @@ static void climber_window_class_init(ClimberWindowClass *klass) {
       widget_class, CLIMBER_APPLICATION_PATH "/gtk/climber-window.ui");
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, header_bar);
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, label);
-  gtk_widget_class_bind_template_child(widget_class, ClimberWindow,
-                                       socks5_label);
-  gtk_widget_class_bind_template_child(widget_class, ClimberWindow, http_label);
+  gtk_widget_class_bind_template_child(widget_class, ClimberWindow, statusbar);
   gtk_widget_class_bind_template_child(widget_class, ClimberWindow, logview);
 
   G_OBJECT_CLASS(widget_class)->finalize = climber_window_finalize;
@@ -91,17 +89,6 @@ static void climber_window_save_preferences(gint socks5_port, gint http_port) {
   g_object_unref(settings);
 }
 
-static void climber_window_update_statusbar(ClimberWindow *self,
-                                            gint socks5_port, gint http_port) {
-  gchar strbuf[1024];
-  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "SOCKS5 port: %d",
-             socks5_port);
-  gtk_label_set_label(self->socks5_label, strbuf);
-  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "HTTP port: %d",
-             http_port);
-  gtk_label_set_label(self->http_label, strbuf);
-}
-
 static void climber_preferences_dialog_response_handler(
     ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data) {
 
@@ -129,7 +116,7 @@ static void climber_preferences_dialog_response_handler(
       climber_service_set_http_port(window->service, http_port);
     }
 
-    climber_window_update_statusbar(window, socks5_port, http_port);
+    climber_window_statusbar_update(window->statusbar, socks5_port, http_port);
   }
   gtk_window_destroy(GTK_WINDOW(dialog));
   window->preferences_dialog = NULL;
@@ -167,6 +154,7 @@ static void climber_window_init(ClimberWindow *self) {
   gint http_port;
 
   g_type_ensure(CLIMBER_TYPE_LOG_VIEW);
+  g_type_ensure(CLIMBER_TYPE_WINDOW_STATUSBAR);
   gtk_widget_init_template(GTK_WIDGET(self));
 
   self->service_switch = climber_service_switch_new();
@@ -188,8 +176,7 @@ static void climber_window_init(ClimberWindow *self) {
   g_signal_connect(G_OBJECT(self->service), "log",
                    G_CALLBACK(climber_service_log_handler), self);
   g_object_unref(settings);
-
-  climber_window_update_statusbar(self, socks5_port, http_port);
+  climber_window_statusbar_update(self->statusbar, socks5_port, http_port);
 }
 
 static void climber_window_finalize(GObject *object) {

@@ -10,5 +10,7 @@
     <file>gtk/climber-service-switch.css</file>
     <file preprocess="xml-stripblanks">gtk/climber-log-view.ui</file>
     <file>gtk/climber-log-view.css</file>
+    <file preprocess="xml-stripblanks">gtk/climber-window-statusbar.ui</file>
+    <file>gtk/climber-window-statusbar.css</file>
   </gresource>
 </gresources>

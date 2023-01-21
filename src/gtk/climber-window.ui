@@ -47,21 +47,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkBox" id="statusbar">
-            <property name="name">statusbar</property>
-            <property name="orientation">horizontal</property>
-            <child>
-              <object class="GtkLabel" id="socks5_label">
-                <property name="label">SOCKS5 port: 10801</property>
-                <property name="name">socks5</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkLabel" id="http_label">
-                <property name="label">HTTP port: 10811</property>
-                <property name="name">http</property>
-              </object>
-            </child>
+          <object class="ClimberWindowStatusbar" id="statusbar">
           </object>
         </child>
       </object>
