@@ -6,6 +6,7 @@ climber_sources = [
   'climber-window.c',
   'climber-preferences-dialog.c',
   'climber-service-switch.c',
+  'climber-log-view.c',
   'io/climber-service.c',
 ]
 

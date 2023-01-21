@@ -8,5 +8,7 @@
     <file>gtk/climber-preferences-dialog.css</file>
     <file preprocess="xml-stripblanks">gtk/climber-service-switch.ui</file>
     <file>gtk/climber-service-switch.css</file>
+    <file preprocess="xml-stripblanks">gtk/climber-log-view.ui</file>
+    <file>gtk/climber-log-view.css</file>
   </gresource>
 </gresources>

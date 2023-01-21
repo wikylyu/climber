@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include "climber-log-view.h"
 #include "climber-preferences-dialog.h"
 #include "climber-service-switch.h"
 #include "climber-window.h"
@@ -35,7 +36,7 @@ struct _ClimberWindow {
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
   ClimberServiceSwitch *service_switch;
-  GtkTextView *logview;
+  ClimberLogView *logview;
   GtkLabel *socks5_label;
   GtkLabel *http_label;
 
@@ -165,6 +166,7 @@ static void climber_window_init(ClimberWindow *self) {
   gint socks5_port;
   gint http_port;
 
+  g_type_ensure(CLIMBER_TYPE_LOG_VIEW);
   gtk_widget_init_template(GTK_WIDGET(self));
 
   self->service_switch = climber_service_switch_new();
@@ -209,22 +211,7 @@ static void climber_service_switch_state_changed_handler(
 static void climber_service_log_handler(ClimberService *service,
                                         const gchar *message,
                                         gpointer user_data) {
-  gchar strbuf[2048];
-  GtkTextIter iter;
-  GtkTextMark *mark;
-  GDateTime *datetime;
   ClimberWindow *self = CLIMBER_WINDOW(user_data);
-  GtkTextBuffer *buffer = gtk_text_view_get_buffer(self->logview);
-
-  gtk_text_buffer_get_iter_at_offset(buffer, &iter, -1);
-
-  datetime = g_date_time_new_now_local();
-  g_snprintf(strbuf, sizeof(strbuf) / sizeof(gchar), "[%02d:%02d:%02d] %s\n",
-             g_date_time_get_hour(datetime), g_date_time_get_minute(datetime),
-             g_date_time_get_second(datetime), message);
-  g_date_time_unref(datetime);
-  gtk_text_buffer_insert_markup(buffer, &iter, strbuf, -1);
-  mark = gtk_text_buffer_create_mark(buffer, "end", &iter, FALSE);
-  gtk_text_view_scroll_mark_onscreen(self->logview, mark);
+  climber_log_view_insert_markup(self->logview, message);
 }
 

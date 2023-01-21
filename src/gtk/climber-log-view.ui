@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<interface>
+  <requires lib="gtk" version="4.0"></requires>
+  <template class="ClimberLogView" parent="GtkBox">
+    <child type="start">
+      <object class="GtkScrolledWindow" id="logwindow">
+        <property name="hexpand">true</property>
+        <property name="hscrollbar-policy">never</property>
+        <property name="hadjustment">
+          <object class="GtkAdjustment" id="hadjustment"/>
+        </property>
+        <property name="vadjustment">
+          <object class="GtkAdjustment" id="vadjustment"/>
+        </property>
+        <child>
+          <object class="GtkTextView" id="textview">
+            <property name="name">textview</property>
+            <property name="editable">false</property>
+            <property name="pixels-above-lines">4</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
