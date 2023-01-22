@@ -1,7 +1,7 @@
 {
     "app-id" : "xyz.wikylyu.climber",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "43",
+    "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "climber",
     "finish-args" : [

@@ -10,6 +10,7 @@ climber_sources = [
   'climber-window-statusbar.c',
   'io/climber-service.c',
   'io/climber-tunnel.c',
+  'io/address.c',
 ]
 
 climber_deps = [
