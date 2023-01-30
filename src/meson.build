@@ -11,11 +11,13 @@ climber_sources = [
   'io/climber-service.c',
   'io/climber-tunnel.c',
   'io/address.c',
+  'io/http/request.c',
 ]
 
 climber_deps = [
   dependency('gtk4'),
   dependency('libadwaita-1'),
+  dependency('libsoup-3.0')
 ]
 
 climber_sources += gnome.compile_resources('climber-resources',

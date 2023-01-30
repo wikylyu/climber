@@ -21,6 +21,7 @@
 #include "address.h"
 #include "climber-service.h"
 #include "climber-tunnel.h"
+#include "http/request.h"
 
 struct _ClimberService {
   GObject parent_instance;
@@ -135,7 +136,7 @@ static void climber_service_run_http(ClimberService *self) {
 
 void climber_service_run(ClimberService *self) {
   if (self->socks5_service != NULL || self->http_service != NULL) {
-    g_debug("service already running");
+    g_print("service already running");
     return;
   }
   climber_service_run_socks5(self);
@@ -202,44 +203,28 @@ static void climber_service_emit_log(ClimberService *self, const gchar *format,
 }
 
 static GNetworkAddress *read_http_connect_request(GInputStream *input_stream) {
-  gchar buf[4096];
-  GError *error;
-  gssize n;
-  GString *str = g_string_new(NULL);
-
-  gchar **lines = NULL;
-  gchar **seps = NULL;
   GNetworkAddress *address = NULL;
+  HttpRequest *request = http_request_read_from_input_stream(input_stream);
+  if (request == NULL) {
 
-  while (TRUE) {
-    n = g_input_stream_read(input_stream, buf, sizeof(buf) / sizeof(gchar),
-                            NULL, &error);
-    if (n <= 0) {
-      goto RETURN;
+    return address;
+  }
+  GUri *uri = http_request_get_uri(request);
+  const gchar *host = g_uri_get_host(uri);
+  gint port = g_uri_get_port(uri);
+  if (port <= 0) {
+    if (g_strcmp0("http", g_uri_get_scheme(uri)) == 0) {
+      port = 80;
+    } else if (g_strcmp0("https", g_uri_get_scheme(uri)) == 0) {
+      port = 443;
     }
-    g_string_append_len(str, buf, n);
+  }
+  gchar *host_and_port = g_strdup_printf("%s:%d", host, port);
+  address = G_NETWORK_ADDRESS(g_network_address_parse(host_and_port, 80, NULL));
 
-    if (g_strstr_len(str->str, str->len, "\r\n\r\n") != NULL) {
-      break;
-    }
-  }
-  lines = g_strsplit(str->str, "\r\n", -1);
-  if (g_strv_length(lines) < 1) {
-    goto RETURN;
-  }
-  seps = g_strsplit(lines[0], " ", -1);
-  if (g_strv_length(seps) != 3) {
-    goto RETURN;
-  }
-  if (!g_str_equal(seps[0], "CONNECT")) {
-    goto RETURN;
-  }
-  address = G_NETWORK_ADDRESS(g_network_address_parse(seps[1], 80, NULL));
+  http_request_free(request);
+  g_free(host_and_port);
 
-RETURN:
-  g_strfreev(lines);
-  g_strfreev(seps);
-  g_string_free(str, TRUE);
   return address;
 }
 
