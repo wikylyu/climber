@@ -145,3 +145,31 @@ void http_request_free(HttpRequest *request) {
   g_free(request);
 }
 
+GBytes *http_request_build_bytes(HttpRequest *request) {
+  /* TODO */
+  return NULL;
+}
+
+gchar *http_request_get_host_and_port(HttpRequest *request) {
+  GUri *uri = request->uri;
+  const gchar *host = g_uri_get_host(uri);
+  gint port = g_uri_get_port(uri);
+  if (port <= 0) {
+    if (g_strcmp0("http", g_uri_get_scheme(uri)) == 0) {
+      port = 80;
+    } else if (g_strcmp0("https", g_uri_get_scheme(uri)) == 0) {
+      port = 443;
+    }
+  }
+  return g_strdup_printf("%s:%d", host, port);
+}
+
+GNetworkAddress *http_request_get_host_address(HttpRequest *request) {
+  gchar *host_and_port = http_request_get_host_and_port(request);
+  GNetworkAddress *address =
+      G_NETWORK_ADDRESS(g_network_address_parse(host_and_port, 80, NULL));
+
+  g_free(host_and_port);
+  return address;
+}
+

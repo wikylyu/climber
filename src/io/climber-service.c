@@ -206,24 +206,12 @@ static GNetworkAddress *read_http_connect_request(GInputStream *input_stream) {
   GNetworkAddress *address = NULL;
   HttpRequest *request = http_request_read_from_input_stream(input_stream);
   if (request == NULL) {
-
     return address;
   }
-  GUri *uri = http_request_get_uri(request);
-  const gchar *host = g_uri_get_host(uri);
-  gint port = g_uri_get_port(uri);
-  if (port <= 0) {
-    if (g_strcmp0("http", g_uri_get_scheme(uri)) == 0) {
-      port = 80;
-    } else if (g_strcmp0("https", g_uri_get_scheme(uri)) == 0) {
-      port = 443;
-    }
-  }
-  gchar *host_and_port = g_strdup_printf("%s:%d", host, port);
-  address = G_NETWORK_ADDRESS(g_network_address_parse(host_and_port, 80, NULL));
+
+  address = http_request_get_host_address(request);
 
   http_request_free(request);
-  g_free(host_and_port);
 
   return address;
 }
