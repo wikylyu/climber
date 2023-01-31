@@ -202,124 +202,36 @@ static void climber_service_emit_log(ClimberService *self, const gchar *format,
   g_signal_emit_by_name(self, "log", strbuf);
 }
 
-static GNetworkAddress *read_http_connect_request(GInputStream *input_stream) {
-  GNetworkAddress *address = NULL;
-  HttpRequest *request = http_request_read_from_input_stream(input_stream);
-  if (request == NULL) {
-    return address;
-  }
-
-  address = http_request_get_host_address(request);
-
-  http_request_free(request);
-
-  return address;
-}
-
-static void read_from_client_async_callback(GObject *source_object,
-                                            GAsyncResult *res,
-                                            gpointer user_data);
-static void read_from_remote_async_callback(GObject *source_object,
-                                            GAsyncResult *res,
-                                            gpointer user_data);
-
-static void read_from_client_async_callback(GObject *source_object,
-                                            GAsyncResult *res,
-                                            gpointer user_data) {
-  ClimberTunnel *tunnel = CLIMBER_TUNNEL(user_data);
-  GSocketConnection *client_conn = climber_tunnel_get_client_conn(tunnel);
-  GSocketConnection *remote_conn = climber_tunnel_get_remote_conn(tunnel);
-  GBytes *bytes = g_input_stream_read_bytes_finish(
-      G_INPUT_STREAM(source_object), res, NULL);
-  if (bytes == NULL || g_bytes_get_size(bytes) == 0) {
-    climber_tunnel_close(tunnel);
-    g_object_unref(tunnel);
-    return;
-  }
-  if (g_output_stream_write_bytes(
-          g_io_stream_get_output_stream(G_IO_STREAM(remote_conn)), bytes, NULL,
-          NULL) < 0) {
-    climber_tunnel_close(tunnel);
-    g_object_unref(tunnel);
-    return;
-  }
-
-  g_bytes_unref(bytes);
-  g_input_stream_read_bytes_async(
-      g_io_stream_get_input_stream(G_IO_STREAM(client_conn)), 4096,
-      G_PRIORITY_DEFAULT, NULL, read_from_client_async_callback, tunnel);
-}
-
-static void read_from_remote_async_callback(GObject *source_object,
-                                            GAsyncResult *res,
-                                            gpointer user_data) {
-  ClimberTunnel *tunnel = CLIMBER_TUNNEL(user_data);
-  GSocketConnection *client_conn = climber_tunnel_get_client_conn(tunnel);
-  GSocketConnection *remote_conn = climber_tunnel_get_remote_conn(tunnel);
-  GBytes *bytes = g_input_stream_read_bytes_finish(
-      G_INPUT_STREAM(source_object), res, NULL);
-  if (bytes == NULL || g_bytes_get_size(bytes) == 0) {
-    climber_tunnel_close(tunnel);
-    g_object_unref(tunnel);
-    return;
-  }
-  if (g_output_stream_write_bytes(
-          g_io_stream_get_output_stream(G_IO_STREAM(client_conn)), bytes, NULL,
-          NULL) < 0) {
-    climber_tunnel_close(tunnel);
-    g_object_unref(tunnel);
-    return;
-  }
-  g_bytes_unref(bytes);
-  g_input_stream_read_bytes_async(
-      g_io_stream_get_input_stream(G_IO_STREAM(remote_conn)), 4096,
-      G_PRIORITY_DEFAULT, NULL, read_from_remote_async_callback, tunnel);
-}
-
-static gboolean climber_service_http_incoming_handler(GSocketService *service,
-                                                      GSocketConnection *conn,
-                                                      GObject *source_object,
-                                                      gpointer user_data) {
-  ClimberService *self = CLIMBER_SERVICE(user_data);
+/* handle HTTP CONNECT request, open a tunnel */
+static void climber_service_http_connect_handler(ClimberService *self,
+                                                 GSocketConnection *conn,
+                                                 GNetworkAddress *address) {
   ClimberTunnel *tunnel = NULL;
-  GInputStream *input_stream = g_io_stream_get_input_stream(G_IO_STREAM(conn));
-  GOutputStream *output_stream =
-      g_io_stream_get_output_stream(G_IO_STREAM(conn));
-  GSocketClient *remote_client = NULL;
-  GSocketConnection *remote_conn = NULL;
   const gchar *response = "HTTP/1.1 200 OK\r\n\r\n";
   gchar *client_address = NULL;
-  gchar *remote_address = NULL;
-  GNetworkAddress *address = read_http_connect_request(input_stream);
-  if (address == NULL) {
-    return FALSE;
-  }
-  remote_address =
+  gchar *remote_address =
       g_strdup_printf("%s:%d", g_network_address_get_hostname(address),
                       g_network_address_get_port(address));
 
-  remote_client = g_socket_client_new();
-  remote_conn = g_socket_client_connect(
+  GSocketClient *remote_client = g_socket_client_new();
+  GSocketConnection *remote_conn = g_socket_client_connect(
       remote_client, G_SOCKET_CONNECTABLE(address), NULL, NULL);
-  g_object_unref(address);
   g_object_unref(remote_client);
   if (remote_conn == NULL) {
-    return FALSE;
+    g_free(client_address);
+    return;
   }
 
-  if (g_output_stream_write(output_stream, response, strlen(response), NULL,
-                            NULL) < 0) {
+  if (g_output_stream_write(g_io_stream_get_output_stream(G_IO_STREAM(conn)),
+                            response, strlen(response), NULL, NULL) < 0) {
     g_object_unref(remote_conn);
-    return FALSE;
+    g_free(client_address);
+    return;
   }
   tunnel = climber_tunnel_new(conn, remote_conn);
   g_object_ref(tunnel);
   g_object_unref(remote_conn);
-  g_input_stream_read_bytes_async(input_stream, 4096, G_PRIORITY_DEFAULT, NULL,
-                                  read_from_client_async_callback, tunnel);
-  g_input_stream_read_bytes_async(
-      g_io_stream_get_input_stream(G_IO_STREAM(remote_conn)), 4096,
-      G_PRIORITY_DEFAULT, NULL, read_from_remote_async_callback, tunnel);
+  climber_tunnel_run(tunnel);
 
   client_address = g_socket_connection_get_remote_address_string(conn);
   climber_service_emit_log(
@@ -327,6 +239,64 @@ static gboolean climber_service_http_incoming_handler(GSocketService *service,
       client_address, remote_address);
   g_free(client_address);
   g_free(remote_address);
+}
+
+/* handle HTTP CONNECT request, open a tunnel */
+static void climber_service_http_common_handler(ClimberService *self,
+                                                GSocketConnection *conn,
+                                                GNetworkAddress *address,
+                                                HttpRequest *request) {
+  GBytes *data = NULL;
+  gssize n;
+  ClimberTunnel *tunnel = NULL;
+  GSocketClient *remote_client = g_socket_client_new();
+  GSocketConnection *remote_conn = g_socket_client_connect(
+      remote_client, G_SOCKET_CONNECTABLE(address), NULL, NULL);
+  g_object_unref(remote_client);
+  if (remote_conn == NULL) {
+    return;
+  }
+  data = http_request_build_bytes(request);
+  n = g_output_stream_write_bytes(
+      g_io_stream_get_output_stream(G_IO_STREAM(remote_conn)), data, NULL,
+      NULL);
+  if (n < 0) {
+    g_object_unref(remote_conn);
+    g_object_unref(conn);
+    g_bytes_unref(data);
+    return;
+  }
+  tunnel = climber_tunnel_new(conn, remote_conn);
+  g_object_ref(tunnel);
+  g_object_unref(remote_conn);
+  climber_tunnel_run(tunnel);
+
+  g_bytes_unref(data);
+}
+
+/* handle HTTP request, including CONNECT,GET and any other http method */
+static gboolean climber_service_http_incoming_handler(GSocketService *service,
+                                                      GSocketConnection *conn,
+                                                      GObject *source_object,
+                                                      gpointer user_data) {
+  ClimberService *self = CLIMBER_SERVICE(user_data);
+  GInputStream *input_stream = g_io_stream_get_input_stream(G_IO_STREAM(conn));
+  GNetworkAddress *address;
+  HttpRequest *request = http_request_read_from_input_stream(input_stream);
+  if (request == NULL) {
+    return FALSE;
+  }
+  address = http_request_get_host_address(request);
+  if (address == NULL) {
+    http_request_free(request);
+    return FALSE;
+  }
+  if (g_ascii_strcasecmp(http_request_get_method(request), "CONNECT") == 0) {
+    climber_service_http_connect_handler(self, conn, address);
+  } else {
+    climber_service_http_common_handler(self, conn, address, request);
+  }
+  http_request_free(request);
   return FALSE;
 }
 

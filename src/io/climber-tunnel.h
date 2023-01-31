@@ -36,4 +36,7 @@ GSocketConnection *climber_tunnel_get_remote_conn(ClimberTunnel *tunnel);
 
 void climber_tunnel_close(ClimberTunnel *tunnel);
 
+void climber_tunnel_run(ClimberTunnel *tunnel);
+
 G_END_DECLS
+

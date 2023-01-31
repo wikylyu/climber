@@ -66,3 +66,73 @@ void climber_tunnel_close(ClimberTunnel *tunnel) {
   g_io_stream_close(G_IO_STREAM(tunnel->client_conn), NULL, NULL);
   g_io_stream_close(G_IO_STREAM(tunnel->remote_conn), NULL, NULL);
 }
+
+static void read_from_client_async_callback(GObject *source_object,
+                                            GAsyncResult *res,
+                                            gpointer user_data);
+static void read_from_remote_async_callback(GObject *source_object,
+                                            GAsyncResult *res,
+                                            gpointer user_data);
+
+static void read_from_client_async_callback(GObject *source_object,
+                                            GAsyncResult *res,
+                                            gpointer user_data) {
+  ClimberTunnel *tunnel = CLIMBER_TUNNEL(user_data);
+  GSocketConnection *client_conn = climber_tunnel_get_client_conn(tunnel);
+  GSocketConnection *remote_conn = climber_tunnel_get_remote_conn(tunnel);
+  GBytes *bytes = g_input_stream_read_bytes_finish(
+      G_INPUT_STREAM(source_object), res, NULL);
+  if (bytes == NULL || g_bytes_get_size(bytes) == 0) {
+    climber_tunnel_close(tunnel);
+    g_object_unref(tunnel);
+    return;
+  }
+  if (g_output_stream_write_bytes(
+          g_io_stream_get_output_stream(G_IO_STREAM(remote_conn)), bytes, NULL,
+          NULL) < 0) {
+    climber_tunnel_close(tunnel);
+    g_object_unref(tunnel);
+    return;
+  }
+
+  g_bytes_unref(bytes);
+  g_input_stream_read_bytes_async(
+      g_io_stream_get_input_stream(G_IO_STREAM(client_conn)), 4096,
+      G_PRIORITY_DEFAULT, NULL, read_from_client_async_callback, tunnel);
+}
+
+static void read_from_remote_async_callback(GObject *source_object,
+                                            GAsyncResult *res,
+                                            gpointer user_data) {
+  ClimberTunnel *tunnel = CLIMBER_TUNNEL(user_data);
+  GSocketConnection *client_conn = climber_tunnel_get_client_conn(tunnel);
+  GSocketConnection *remote_conn = climber_tunnel_get_remote_conn(tunnel);
+  GBytes *bytes = g_input_stream_read_bytes_finish(
+      G_INPUT_STREAM(source_object), res, NULL);
+  if (bytes == NULL || g_bytes_get_size(bytes) == 0) {
+    climber_tunnel_close(tunnel);
+    g_object_unref(tunnel);
+    return;
+  }
+  if (g_output_stream_write_bytes(
+          g_io_stream_get_output_stream(G_IO_STREAM(client_conn)), bytes, NULL,
+          NULL) < 0) {
+    climber_tunnel_close(tunnel);
+    g_object_unref(tunnel);
+    return;
+  }
+  g_bytes_unref(bytes);
+  g_input_stream_read_bytes_async(
+      g_io_stream_get_input_stream(G_IO_STREAM(remote_conn)), 4096,
+      G_PRIORITY_DEFAULT, NULL, read_from_remote_async_callback, tunnel);
+}
+
+void climber_tunnel_run(ClimberTunnel *tunnel) {
+  g_input_stream_read_bytes_async(
+      g_io_stream_get_input_stream(G_IO_STREAM(tunnel->client_conn)), 4096,
+      G_PRIORITY_DEFAULT, NULL, read_from_client_async_callback, tunnel);
+  g_input_stream_read_bytes_async(
+      g_io_stream_get_input_stream(G_IO_STREAM(tunnel->remote_conn)), 4096,
+      G_PRIORITY_DEFAULT, NULL, read_from_remote_async_callback, tunnel);
+}
+

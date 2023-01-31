@@ -136,6 +136,10 @@ RETURN:
 
 GUri *http_request_get_uri(HttpRequest *request) { return request->uri; }
 
+const gchar *http_request_get_method(HttpRequest *request) {
+  return request->method;
+}
+
 void http_request_free(HttpRequest *request) {
   g_free(request->method);
   g_free(request->version);
@@ -146,8 +150,37 @@ void http_request_free(HttpRequest *request) {
 }
 
 GBytes *http_request_build_bytes(HttpRequest *request) {
-  /* TODO */
-  return NULL;
+  GByteArray *array = NULL;
+  GString *string = g_string_new(NULL);
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_string_append(string, request->method);
+  g_string_append(string, " ");
+  g_string_append(string, g_uri_get_path(request->uri));
+  if (g_uri_get_query(request->uri) != NULL) {
+    g_string_append(string, "?");
+    g_string_append(string, g_uri_get_query(request->uri));
+  }
+  g_string_append(string, " ");
+  g_string_append(string, request->version);
+  g_string_append(string, "\r\n");
+
+  g_hash_table_iter_init(&iter, request->headers);
+  while (g_hash_table_iter_next(&iter, &key, &value)) {
+    g_string_append(string, (const gchar *)key);
+    g_string_append(string, " : ");
+    g_string_append(string, (const gchar *)value);
+    g_string_append(string, "\r\n");
+  }
+  g_string_append(string, "\r\n");
+
+  array = g_bytes_unref_to_array(g_string_free_to_bytes(string));
+  if (request->body->len > 0) {
+    g_byte_array_append(array, request->body->data, request->body->len);
+  }
+
+  return g_byte_array_free_to_bytes(array);
 }
 
 gchar *http_request_get_host_and_port(HttpRequest *request) {

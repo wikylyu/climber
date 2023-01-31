@@ -35,6 +35,7 @@ GBytes *http_request_build_bytes(HttpRequest *request);
 
 gchar *http_request_get_host_and_port(HttpRequest *request);
 GNetworkAddress *http_request_get_host_address(HttpRequest *request);
+const gchar *http_request_get_method(HttpRequest *request);
 
 G_END_DECLS
 
