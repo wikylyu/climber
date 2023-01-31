@@ -6,8 +6,8 @@ Other desktop environments are not supported, and will not be supported.
 ## Features
 
 * Local HTTP(S) and SOCKS5 proxy.
-* Plain or VMess protocal for remote connection.
-* V2ray subscription and standalone configration.
+* Plain or MTop protocal for remote connection.
+* MTop subscription and standalone configration.
 
 ## Development
 
