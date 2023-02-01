@@ -17,17 +17,18 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+
 #pragma once
 
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-typedef struct _HttpRequest HttpRequest;
+#define HTTP_TYPE_REQUEST (http_request_get_type())
+
+G_DECLARE_FINAL_TYPE(HttpRequest, http_request, HTTP, REQUEST, GObject)
 
 HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream);
-
-void http_request_free(HttpRequest *request);
 
 GUri *http_request_get_uri(HttpRequest *request);
 

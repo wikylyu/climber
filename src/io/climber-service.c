@@ -247,8 +247,8 @@ static void climber_service_http_common_handler(ClimberService *self,
                                                 GNetworkAddress *address,
                                                 HttpRequest *request) {
   GBytes *data = NULL;
+  gchar buf[4096];
   gssize n;
-  ClimberTunnel *tunnel = NULL;
   GSocketClient *remote_client = g_socket_client_new();
   GSocketConnection *remote_conn = g_socket_client_connect(
       remote_client, G_SOCKET_CONNECTABLE(address), NULL, NULL);
@@ -257,21 +257,35 @@ static void climber_service_http_common_handler(ClimberService *self,
     return;
   }
   data = http_request_build_bytes(request);
+  g_print("%s\n", (gchar *)g_bytes_get_data(data, NULL));
   n = g_output_stream_write_bytes(
       g_io_stream_get_output_stream(G_IO_STREAM(remote_conn)), data, NULL,
       NULL);
+  g_bytes_unref(data);
   if (n < 0) {
     g_object_unref(remote_conn);
-    g_object_unref(conn);
-    g_bytes_unref(data);
     return;
   }
-  tunnel = climber_tunnel_new(conn, remote_conn);
-  g_object_ref(tunnel);
+  while (TRUE) {
+    n = g_input_stream_read(
+        g_io_stream_get_input_stream(G_IO_STREAM(remote_conn)), buf,
+        sizeof(buf) / sizeof(gchar), NULL, NULL);
+    g_print("read1 %ld\n", n);
+    if (n <= 0) {
+      break;
+    }
+    n = g_output_stream_write(g_io_stream_get_output_stream(G_IO_STREAM(conn)),
+                              buf, n, NULL, NULL);
+    if (n <= 0) {
+      break;
+    }
+  }
   g_object_unref(remote_conn);
-  climber_tunnel_run(tunnel);
-
-  g_bytes_unref(data);
+  g_print("connection closed");
+  /* tunnel = climber_tunnel_new(conn, remote_conn); */
+  /* g_object_ref(tunnel); */
+  /* g_object_unref(remote_conn); */
+  /* climber_tunnel_run(tunnel); */
 }
 
 /* handle HTTP request, including CONNECT,GET and any other http method */
@@ -288,7 +302,7 @@ static gboolean climber_service_http_incoming_handler(GSocketService *service,
   }
   address = http_request_get_host_address(request);
   if (address == NULL) {
-    http_request_free(request);
+    g_object_unref(request);
     return FALSE;
   }
   if (g_ascii_strcasecmp(http_request_get_method(request), "CONNECT") == 0) {
@@ -296,7 +310,7 @@ static gboolean climber_service_http_incoming_handler(GSocketService *service,
   } else {
     climber_service_http_common_handler(self, conn, address, request);
   }
-  http_request_free(request);
+  g_object_unref(request);
   return FALSE;
 }
 

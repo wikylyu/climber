@@ -17,10 +17,11 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #include "request.h"
 
 struct _HttpRequest {
+  GObject parent_instance;
+
   gchar *method;
   GUri *uri;
   gchar *version;
@@ -28,82 +29,131 @@ struct _HttpRequest {
   GByteArray *body;
 };
 
+G_DEFINE_FINAL_TYPE(HttpRequest, http_request, G_TYPE_OBJECT)
+
+static void http_request_finalize(GObject *object) {
+  HttpRequest *self = HTTP_REQUEST(object);
+  g_free(self->method);
+  g_free(self->version);
+  g_uri_unref(self->uri);
+  g_hash_table_unref(self->headers);
+  g_byte_array_free(self->body, TRUE);
+  G_OBJECT_CLASS(http_request_parent_class)->finalize(object);
+}
+
+static void http_request_class_init(HttpRequestClass *klass) {
+  G_OBJECT_CLASS(klass)->finalize = http_request_finalize;
+}
+
+static void http_request_init(HttpRequest *self) {}
+
+static gboolean http_request_header_key_equal(gconstpointer a,
+                                              gconstpointer b) {
+  if (g_ascii_strcasecmp(a, b) == 0) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+static gboolean http_parse_firstline(const gchar *firstline, gchar **method,
+                                     GUri **uri, gchar **version) {
+  gchar **seps = g_strsplit(firstline, " ", -1);
+  if (g_strv_length(seps) != 3) {
+    g_strfreev(seps);
+    return FALSE;
+  }
+
+  if (g_str_has_prefix(seps[1], "http")) {
+    *uri = g_uri_parse(seps[1], G_URI_FLAGS_NONE, NULL);
+  } else {
+    gchar *tmp = g_strdup_printf("http://%s", seps[1]);
+    *uri = g_uri_parse(tmp, G_URI_FLAGS_NONE, NULL);
+    g_free(tmp);
+  }
+  if (*uri == NULL) { // parse uri failed
+    g_strfreev(seps);
+    return FALSE;
+  }
+  *method = g_strdup(seps[0]);
+  *version = g_strdup(seps[2]);
+  return TRUE;
+}
+
+static gboolean http_parse_header(const gchar *header, gchar **k, gchar **v) {
+  gchar **kv = g_strsplit(header, ":", 2);
+  if (g_strv_length(kv) == 1) {
+    *k = g_strdup(g_strstrip(kv[0]));
+    *v = g_strdup("");
+  } else if (g_strv_length(kv) == 2) {
+    *k = g_strdup(g_strstrip(kv[0]));
+    *v = g_strdup(g_strstrip(kv[1]));
+  } else {
+    g_strfreev(kv);
+    return FALSE;
+  }
+  g_strfreev(kv);
+  return TRUE;
+}
+
 HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream) {
   HttpRequest *request = NULL;
-  gchar **lines = NULL;
-  gchar **seps = NULL;
   gchar *method = NULL;
   gchar *version = NULL;
   GUri *uri = NULL;
   GHashTable *headers = NULL;
   GByteArray *body = NULL;
-  gint i;
   guint64 content_length = 0;
-
+  gchar *buf;
+  GError *error = NULL;
   GDataInputStream *data_stream = g_data_input_stream_new(input_stream);
   g_filter_input_stream_set_close_base_stream(
       G_FILTER_INPUT_STREAM(data_stream), FALSE);
-  gsize length;
-  gchar *buf = g_data_input_stream_read_upto(data_stream, "\r\n\r\n", 4,
-                                             &length, NULL, NULL);
+  g_data_input_stream_set_newline_type(data_stream,
+                                       G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
+
+  buf = g_data_input_stream_read_line(data_stream, NULL, NULL, NULL);
   if (buf == NULL) {
     goto RETURN;
   }
-  g_data_input_stream_read_byte(data_stream, NULL, NULL);
-  g_data_input_stream_read_byte(data_stream, NULL, NULL);
-  g_data_input_stream_read_byte(data_stream, NULL, NULL);
-  g_data_input_stream_read_byte(data_stream, NULL, NULL);
-
-  lines = g_strsplit(buf, "\r\n", -1);
-  if (g_strv_length(lines) < 1) {
+  if (!http_parse_firstline(g_strstrip(buf), &method, &uri, &version)) {
     goto RETURN;
   }
-  seps = g_strsplit(g_strstrip(lines[0]), " ", -1);
-  if (g_strv_length(seps) != 3) {
-    goto RETURN;
-  }
-
-  if (g_str_has_prefix(seps[1], "http")) {
-    uri = g_uri_parse(seps[1], G_URI_FLAGS_NONE, NULL);
-  } else {
-    gchar *tmp = g_strdup_printf("http://%s", seps[1]);
-    uri = g_uri_parse(tmp, G_URI_FLAGS_NONE, NULL);
-    g_free(tmp);
-  }
-  if (uri == NULL) { // parse uri failed
-    goto RETURN;
-  }
-  method = g_strdup(seps[0]);
-  version = g_strdup(seps[2]);
-  headers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-  i = 1;
-  for (i = 1; i < g_strv_length(lines); i++) {
+  g_free(buf);
+  headers = g_hash_table_new_full(g_str_hash, http_request_header_key_equal,
+                                  g_free, g_free);
+  while (TRUE) {
     gchar **kv = NULL;
-    gchar *header = g_strstrip(lines[i]);
     gchar *k = NULL;
     gchar *v = NULL;
-    kv = g_strsplit(header, ":", 2);
-
-    if (g_strv_length(kv) == 1) {
-      k = g_strdup(g_strstrip(kv[0]));
-      v = g_strdup("");
-    } else if (g_strv_length(kv) == 2) {
-      k = g_strdup(g_strstrip(kv[0]));
-      v = g_strdup(g_strstrip(kv[1]));
-    } else {
-      g_strfreev(kv);
+    buf = g_data_input_stream_read_line(data_stream, NULL, NULL, &error);
+    if (error != NULL) {
+      g_free(method);
+      g_free(version);
+      g_uri_unref(uri);
+      g_hash_table_unref(headers);
+      goto RETURN;
+    } else if (buf == NULL) {
+      break;
+    } else if (strlen(buf) == 0) {
+      g_free(buf);
+      break;
+    }
+    if (!http_parse_header(g_strstrip(buf), &k, &v)) {
+      g_free(buf);
       continue;
     }
+    g_free(buf);
     g_hash_table_insert(headers, k, v);
     if (g_ascii_strncasecmp(k, "content-length", -1) == 0) {
       content_length = g_ascii_strtoull(v, NULL, 64);
     }
     g_strfreev(kv);
   }
+  // g_hash_table_insert(headers, g_strdup("Connection"), g_strdup("Closed"));
   body = g_byte_array_new();
   if (content_length > 0) {
     gsize bytes_read;
-    gchar *body_buffer = g_malloc(sizeof(gchar) * content_length);
+    guint8 *body_buffer = g_malloc(sizeof(guint8) * content_length);
     if (!g_input_stream_read_all(G_INPUT_STREAM(data_stream), body_buffer,
                                  content_length, &bytes_read, NULL, NULL) ||
         bytes_read != content_length) {
@@ -118,7 +168,7 @@ HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream) {
     g_byte_array_append(body, body_buffer, bytes_read);
     g_free(body_buffer);
   }
-  request = (HttpRequest *)g_malloc(sizeof(HttpRequest));
+  request = HTTP_REQUEST(g_object_new(HTTP_TYPE_REQUEST, NULL));
   request->method = method;
   request->uri = uri;
   request->version = version;
@@ -126,11 +176,10 @@ HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream) {
   request->body = body;
 
 RETURN:
-
-  g_strfreev(lines);
-  g_strfreev(seps);
+  if (error != NULL) {
+    g_error_free(error);
+  }
   g_object_unref(data_stream);
-  g_free(buf);
   return request;
 }
 
@@ -138,15 +187,6 @@ GUri *http_request_get_uri(HttpRequest *request) { return request->uri; }
 
 const gchar *http_request_get_method(HttpRequest *request) {
   return request->method;
-}
-
-void http_request_free(HttpRequest *request) {
-  g_free(request->method);
-  g_free(request->version);
-  g_uri_unref(request->uri);
-  g_hash_table_unref(request->headers);
-  g_byte_array_free(request->body, TRUE);
-  g_free(request);
 }
 
 GBytes *http_request_build_bytes(HttpRequest *request) {
