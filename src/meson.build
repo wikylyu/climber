@@ -12,6 +12,8 @@ climber_sources = [
   'io/climber-tunnel.c',
   'io/address.c',
   'io/http/request.c',
+  'io/http/response.c',
+  'io/http/common.c',
 ]
 
 climber_deps = [
