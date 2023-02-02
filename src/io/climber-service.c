@@ -191,8 +191,9 @@ void climber_service_set_http_port(ClimberService *service, gint http_port) {
   service->http_port = http_port;
 }
 
-static void climber_service_emit_log(ClimberService *self, const gchar *format,
-                                     ...) {
+/* emit log message */
+__attribute__((format(printf, 2, 3))) static void
+climber_service_emit_log(ClimberService *self, const gchar *format, ...) {
   gchar strbuf[1024];
   va_list args;
   va_start(args, format);
@@ -252,6 +253,8 @@ static void climber_service_http_common_handler(ClimberService *self,
   gsize body_size = 0;
   guint64 content_length;
   HttpResponse *response = NULL;
+  gchar *remote_address = NULL;
+  gchar *client_address = NULL;
   GSocketClient *remote_client = g_socket_client_new();
   GSocketConnection *remote_conn = g_socket_client_connect(
       remote_client, G_SOCKET_CONNECTABLE(address), NULL, NULL);
@@ -299,10 +302,16 @@ static void climber_service_http_common_handler(ClimberService *self,
     }
     body_size += n;
   }
-
+  client_address = g_socket_connection_get_remote_address_string(conn);
+  remote_address =
+      g_strdup_printf("%s:%d", g_network_address_get_hostname(address),
+                      g_network_address_get_port(address));
+  climber_service_emit_log(self, "[HTTP] %s => %s ", client_address,
+                           remote_address);
+  g_free(remote_address);
+  g_free(client_address);
   g_object_unref(response);
   g_object_unref(remote_conn);
-  g_print("connection closed: %ld\n", n);
 }
 
 /* handle HTTP request, including CONNECT,GET and any other http method */

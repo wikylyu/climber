@@ -141,24 +141,6 @@ HttpResponse *http_response_read_from_input_stream(GInputStream *input_stream) {
     g_byte_array_append(body, body_buffer, bytes_read);
     g_free(body_buffer);
   }
-  /* if (content_length > 0) { */
-  /*   gsize bytes_read; */
-  /*   guint8 *body_buffer = g_malloc(sizeof(guint8) * content_length); */
-  /*   if (!g_input_stream_read_all(G_INPUT_STREAM(data_stream), body_buffer, */
-  /*                                content_length, &bytes_read, NULL, NULL) ||
-   */
-  /*       bytes_read != content_length) { */
-  /*     g_free(body_buffer); */
-  /*     g_free(code); */
-  /*     g_free(version); */
-  /*     g_free(message); */
-  /*     g_hash_table_unref(headers); */
-  /*     g_byte_array_free(body, TRUE); */
-  /*     goto RETURN; */
-  /*   } */
-  /*   g_byte_array_append(body, body_buffer, bytes_read); */
-  /*   g_free(body_buffer); */
-  /* } */
   response = HTTP_RESPONSE(g_object_new(HTTP_TYPE_RESPONSE, NULL));
   response->version = version;
   response->code = code;
