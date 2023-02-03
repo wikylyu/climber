@@ -15,6 +15,8 @@ climber_sources = [
   'io/http/response.c',
   'io/http/common.c',
   'io/mtop/request.c',
+  'io/mtop/response.c',
+  'io/mtop/client.c'
 ]
 
 climber_deps = [

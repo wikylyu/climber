@@ -73,7 +73,7 @@ static gboolean http_parse_firstline(const gchar *firstline, gchar **method,
   return TRUE;
 }
 
-HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream) {
+HttpRequest *http_request_new_from_input_stream(GInputStream *input_stream) {
   HttpRequest *request = NULL;
   gchar *method = NULL;
   gchar *version = NULL;

@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE(HttpRequest, http_request, HTTP, REQUEST, GObject)
 
-HttpRequest *http_request_read_from_input_stream(GInputStream *input_stream);
+HttpRequest *http_request_new_from_input_stream(GInputStream *input_stream);
 
 GUri *http_request_get_uri(HttpRequest *request);
 

@@ -1,4 +1,4 @@
-/* response.h
+/* client.c
  *
  * Copyright 2023 Wiky Lyu
  *
@@ -17,22 +17,4 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
-#pragma once
-
-#include <gtk/gtk.h>
-
-G_BEGIN_DECLS
-
-#define HTTP_TYPE_RESPONSE (http_response_get_type())
-
-G_DECLARE_FINAL_TYPE(HttpResponse, http_response, HTTP, RESPONSE, GObject)
-
-HttpResponse *http_response_new_from_input_stream(GInputStream *input_stream);
-
-GBytes *http_response_build_bytes(HttpResponse *response, gsize *body_size);
-
-guint64 http_response_get_content_length(HttpResponse *response);
-
-G_END_DECLS
-
+#include "client.h"

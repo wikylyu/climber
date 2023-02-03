@@ -271,7 +271,7 @@ static void climber_service_http_common_handler(ClimberService *self,
     g_object_unref(remote_conn);
     return;
   }
-  response = http_response_read_from_input_stream(
+  response = http_response_new_from_input_stream(
       g_io_stream_get_input_stream(G_IO_STREAM(remote_conn)));
   if (response == NULL) {
     g_object_unref(remote_conn);
@@ -322,7 +322,7 @@ static gboolean climber_service_http_incoming_handler(GSocketService *service,
   ClimberService *self = CLIMBER_SERVICE(user_data);
   GInputStream *input_stream = g_io_stream_get_input_stream(G_IO_STREAM(conn));
   GNetworkAddress *address;
-  HttpRequest *request = http_request_read_from_input_stream(input_stream);
+  HttpRequest *request = http_request_new_from_input_stream(input_stream);
   if (request == NULL) {
     return FALSE;
   }

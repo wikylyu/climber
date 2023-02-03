@@ -24,15 +24,18 @@
 
 G_BEGIN_DECLS
 
-#define HTTP_TYPE_RESPONSE (http_response_get_type())
+const guchar MTOP_STATUS_SUCCESS=0x00;
+const guchar MTOP_STATUS_INVALID_VERSION=0x01;
+const guchar MTOP_STATUS_AUTH_FAILURE=0x02;
+const guchar MTOP_STATUS_CONNECTION_FAILURE=0x03;
 
-G_DECLARE_FINAL_TYPE(HttpResponse, http_response, HTTP, RESPONSE, GObject)
+#define MTOP_TYPE_RESPONSE (mtop_response_get_type())
 
-HttpResponse *http_response_new_from_input_stream(GInputStream *input_stream);
+G_DECLARE_FINAL_TYPE(MtopResponse, mtop_response, MTOP, RESPONSE, GObject)
 
-GBytes *http_response_build_bytes(HttpResponse *response, gsize *body_size);
+MtopResponse *mtop_response_new(guchar version,guchar status);
 
-guint64 http_response_get_content_length(HttpResponse *response);
+MtopResponse *mtop_response_new_from_input_stream(GInputStream *input_stream);
 
 G_END_DECLS
 

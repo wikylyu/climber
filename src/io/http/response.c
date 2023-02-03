@@ -65,7 +65,7 @@ static gboolean http_parse_statusline(const gchar *statusline, gchar **version,
   return TRUE;
 }
 
-HttpResponse *http_response_read_from_input_stream(GInputStream *input_stream) {
+HttpResponse *http_response_new_from_input_stream(GInputStream *input_stream) {
   HttpResponse *response = NULL;
   gchar *code = NULL;
   gchar *version = NULL;
