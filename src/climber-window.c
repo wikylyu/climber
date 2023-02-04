@@ -71,6 +71,8 @@ static void climber_window_new_server_action(GSimpleAction *action,
   ClimberWindow *self = user_data;
 
   g_assert(CLIMBER_IS_WINDOW(self));
+
+  g_print("new server\n");
 }
 
 static void climber_window_new_subscription_action(GSimpleAction *action,

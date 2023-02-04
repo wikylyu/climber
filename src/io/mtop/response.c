@@ -38,20 +38,22 @@ static void mtop_response_class_init(MtopResponseClass *klass) {
 
 static void mtop_response_init(MtopResponse *self) {}
 
-MtopResponse *mtop_response_new(guchar version,guchar status){
-  MtopResponse *response=MTOP_RESPONSE(g_object_new (MTOP_TYPE_RESPONSE, NULL));
-  response->version=version;
-  response->status=status;
+MtopResponse *mtop_response_new(guchar version, guchar status) {
+  MtopResponse *response =
+      MTOP_RESPONSE(g_object_new(MTOP_TYPE_RESPONSE, NULL));
+  response->version = version;
+  response->status = status;
   return response;
 }
 
 MtopResponse *mtop_response_new_from_input_stream(GInputStream *input_stream) {
   gchar buf[2];
-  gsize bytes_read=0;
-  if(!g_input_stream_read_all(input_stream, buf,sizeof(buf)/sizeof(gchar), &bytes_read,NULL,NULL )){
+  gsize bytes_read = 0;
+  if (!g_input_stream_read_all(input_stream, buf, sizeof(buf) / sizeof(gchar),
+                               &bytes_read, NULL, NULL)) {
     return NULL;
-  }else if(bytes_read!=2){
+  } else if (bytes_read != 2) {
     return NULL;
   }
-  return mtop_response_new(buf[0],buf[1]);
+  return mtop_response_new(buf[0], buf[1]);
 }

@@ -103,4 +103,3 @@ GBytes *mtop_request_build_bytes(MtopRequest *request) {
   g_byte_array_append(array, (const guint8 *)&port, 2);
   return g_byte_array_free_to_bytes(array);
 }
-

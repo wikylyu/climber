@@ -22,20 +22,19 @@
 
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
+#define MTOP_STATUS_SUCCESS 0x00
+#define MTOP_STATUS_INVALID_VERSION 0x01
+#define MTOP_STATUS_AUTH_FAILURE 0x02
+#define MTOP_STATUS_CONNECTION_FAILURE 0x03
 
-const guchar MTOP_STATUS_SUCCESS=0x00;
-const guchar MTOP_STATUS_INVALID_VERSION=0x01;
-const guchar MTOP_STATUS_AUTH_FAILURE=0x02;
-const guchar MTOP_STATUS_CONNECTION_FAILURE=0x03;
+G_BEGIN_DECLS
 
 #define MTOP_TYPE_RESPONSE (mtop_response_get_type())
 
 G_DECLARE_FINAL_TYPE(MtopResponse, mtop_response, MTOP, RESPONSE, GObject)
 
-MtopResponse *mtop_response_new(guchar version,guchar status);
+MtopResponse *mtop_response_new(guchar version, guchar status);
 
 MtopResponse *mtop_response_new_from_input_stream(GInputStream *input_stream);
 
 G_END_DECLS
-

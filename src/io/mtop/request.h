@@ -22,14 +22,14 @@
 
 #include <gtk/gtk.h>
 
+#define MTOP_VERION_1 0x01
+#define MTOP_METHOD_CONNECT 0x01
+
+#define MTOP_ADDRESS_TYPE_IPV4 0x01
+#define MTOP_ADDRESS_TYPE_IPV6 0x04
+#define MTOP_ADDRESS_TYPE_DOMAIN 0x03
+
 G_BEGIN_DECLS
-
-const guchar MTOP_VERION_1 = 0x01;
-const guchar MTOP_METHOD_CONNECT = 0x01;
-
-const guchar MTOP_ADDRESS_TYPE_IPV4 = 0x01;
-const guchar MTOP_ADDRESS_TYPE_IPV6 = 0x04;
-const guchar MTOP_ADDRESS_TYPE_DOMAIN = 0x03;
 
 #define MTOP_TYPE_REQUEST (mtop_request_get_type())
 
@@ -41,4 +41,3 @@ MtopRequest *mtop_request_new(guchar version, guchar method,
 GBytes *mtop_request_build_bytes(MtopRequest *request);
 
 G_END_DECLS
-

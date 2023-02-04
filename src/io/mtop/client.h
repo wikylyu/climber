@@ -23,5 +23,13 @@
 
 G_BEGIN_DECLS
 
-G_END_DECLS
+/*
+ * Connect to mtop server
+ * ca optional, if set, it's the path for custom ca file
+ */
+GIOStream *mtop_connect(const gchar *username, const gchar *password,
+                        const gchar *server_host, gushort server_port,
+                        const gchar *ca, const gchar *target_host,
+                        gushort target_port);
 
+G_END_DECLS
