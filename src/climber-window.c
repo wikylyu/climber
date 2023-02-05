@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "climber-log-view.h"
+#include "climber-new-server-dialog.h"
 #include "climber-preferences-dialog.h"
 #include "climber-service-switch.h"
 #include "climber-window-statusbar.h"
@@ -36,6 +37,7 @@ struct _ClimberWindow {
   GtkHeaderBar *header_bar;
   GtkLabel *label;
   ClimberPreferencesDialog *preferences_dialog;
+  ClimberNewServerDialog *new_server_dialog;
   ClimberServiceSwitch *service_switch;
   ClimberLogView *logview;
   ClimberWindowStatusbar *statusbar;
@@ -51,6 +53,11 @@ static void climber_service_log_handler(ClimberService *service,
                                         const gchar *message,
                                         gpointer user_data);
 static void climber_window_finalize(GObject *object);
+
+static void climber_preferences_dialog_response_handler(
+    ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data);
+static void climber_new_server_dialog_response_handler(
+    ClimberNewServerDialog *dialog, gint response_id, gpointer user_data);
 
 static void climber_window_class_init(ClimberWindowClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
@@ -72,7 +79,14 @@ static void climber_window_new_server_action(GSimpleAction *action,
 
   g_assert(CLIMBER_IS_WINDOW(self));
 
-  g_print("new server\n");
+  if (self->new_server_dialog == NULL) {
+    self->new_server_dialog = climber_new_server_dialog_new(GTK_WINDOW(self));
+    g_signal_connect(G_OBJECT(self->new_server_dialog), "response",
+                     G_CALLBACK(climber_new_server_dialog_response_handler),
+                     self);
+  }
+
+  gtk_window_present(GTK_WINDOW(self->new_server_dialog));
 }
 
 static void climber_window_new_subscription_action(GSimpleAction *action,
@@ -89,39 +103,6 @@ static void climber_window_save_preferences(gint socks5_port, gint http_port) {
   g_settings_set_int(settings, "socks5-port", socks5_port);
   g_settings_set_int(settings, "http-port", http_port);
   g_object_unref(settings);
-}
-
-static void climber_preferences_dialog_response_handler(
-    ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data) {
-
-  ClimberWindow *window = CLIMBER_WINDOW(user_data);
-  if (response_id == GTK_RESPONSE_OK) {
-    gint socks5_port = climber_preferences_dialog_get_socks5_port(dialog);
-    gint http_port = climber_preferences_dialog_get_http_port(dialog);
-    if (socks5_port < 0 || socks5_port > 65535) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "Invalid SOCKS5 port: %d", socks5_port);
-    } else if (http_port < 0 || http_port > 65535) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "Invalid HTTP port: %d", http_port);
-    } else if (socks5_port == http_port && socks5_port != 0) {
-      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
-                          "SOCKS5 port and HTTP port cannot be the same");
-      return;
-    }
-    climber_window_save_preferences(socks5_port, http_port);
-    if (climber_service_switch_get_state(window->service_switch)) {
-      /* When the service is running, restart it */
-      climber_service_restart(window->service, socks5_port, http_port);
-    } else {
-      climber_service_set_socks5_port(window->service, socks5_port);
-      climber_service_set_http_port(window->service, http_port);
-    }
-
-    climber_window_statusbar_update(window->statusbar, socks5_port, http_port);
-  }
-  gtk_window_destroy(GTK_WINDOW(dialog));
-  window->preferences_dialog = NULL;
 }
 
 /*
@@ -179,6 +160,9 @@ static void climber_window_init(ClimberWindow *self) {
                    G_CALLBACK(climber_service_log_handler), self);
   g_object_unref(settings);
   climber_window_statusbar_update(self->statusbar, socks5_port, http_port);
+
+  self->preferences_dialog = NULL;
+  self->new_server_dialog = NULL;
 }
 
 static void climber_window_finalize(GObject *object) {
@@ -203,3 +187,47 @@ static void climber_service_log_handler(ClimberService *service,
   ClimberWindow *self = CLIMBER_WINDOW(user_data);
   climber_log_view_insert_markup(self->logview, message);
 }
+
+static void climber_preferences_dialog_response_handler(
+    ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data) {
+
+  ClimberWindow *window = CLIMBER_WINDOW(user_data);
+  if (response_id == GTK_RESPONSE_OK) {
+    gint socks5_port = climber_preferences_dialog_get_socks5_port(dialog);
+    gint http_port = climber_preferences_dialog_get_http_port(dialog);
+    if (socks5_port < 0 || socks5_port > 65535) {
+      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
+                          "Invalid SOCKS5 port: %d", socks5_port);
+    } else if (http_port < 0 || http_port > 65535) {
+      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
+                          "Invalid HTTP port: %d", http_port);
+    } else if (socks5_port == http_port && socks5_port != 0) {
+      show_message_dialog(GTK_WINDOW(dialog), GTK_MESSAGE_WARNING,
+                          "SOCKS5 port and HTTP port cannot be the same");
+      return;
+    }
+    climber_window_save_preferences(socks5_port, http_port);
+    if (climber_service_switch_get_state(window->service_switch)) {
+      /* When the service is running, restart it */
+      climber_service_restart(window->service, socks5_port, http_port);
+    } else {
+      climber_service_set_socks5_port(window->service, socks5_port);
+      climber_service_set_http_port(window->service, http_port);
+    }
+
+    climber_window_statusbar_update(window->statusbar, socks5_port, http_port);
+  }
+  gtk_window_destroy(GTK_WINDOW(dialog));
+  window->preferences_dialog = NULL;
+}
+
+static void climber_new_server_dialog_response_handler(
+    ClimberNewServerDialog *dialog, gint response_id, gpointer user_data) {
+
+  ClimberWindow *window = CLIMBER_WINDOW(user_data);
+  if (response_id == GTK_RESPONSE_OK) {
+  }
+  gtk_window_destroy(GTK_WINDOW(dialog));
+  window->new_server_dialog = NULL;
+}
+

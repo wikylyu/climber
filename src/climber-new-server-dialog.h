@@ -1,4 +1,4 @@
-/* climber-preferences-dialog.h
+/* climber-new-server-dialog.h
  *
  * Copyright 2023 Wiky Lyu
  *
@@ -24,16 +24,12 @@
 
 G_BEGIN_DECLS
 
-#define CLIMBER_TYPE_PREFERENCES_DIALOG (climber_preferences_dialog_get_type())
+#define CLIMBER_TYPE_NEW_SERVER_DIALOG (climber_new_server_dialog_get_type())
 
-G_DECLARE_FINAL_TYPE(ClimberPreferencesDialog, climber_preferences_dialog,
-                     CLIMBER, PREFERENCES_DIALOG, GtkDialog)
+G_DECLARE_FINAL_TYPE(ClimberNewServerDialog, climber_new_server_dialog, CLIMBER,
+                     NEW_SERVER_DIALOG, GtkDialog)
 
-ClimberPreferencesDialog *climber_preferences_dialog_new(GtkApplication *app);
-
-gint climber_preferences_dialog_get_socks5_port(
-    ClimberPreferencesDialog *dialog);
-gint climber_preferences_dialog_get_http_port(ClimberPreferencesDialog *dialog);
+ClimberNewServerDialog *climber_new_server_dialog_new(GtkWindow *win);
 
 G_END_DECLS
 

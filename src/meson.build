@@ -8,6 +8,7 @@ climber_sources = [
   'climber-service-switch.c',
   'climber-log-view.c',
   'climber-window-statusbar.c',
+  'climber-new-server-dialog.c',
   'io/climber-service.c',
   'io/climber-tunnel.c',
   'io/address.c',
