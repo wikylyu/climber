@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include "server-config.h"
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -32,4 +33,9 @@ GIOStream *mtop_connect(const gchar *username, const gchar *password,
                         const gchar *ca, const gchar *target_host,
                         gushort target_port);
 
+GIOStream *mtop_connect_with_server_config(MtopServerConfig *config,
+                                           const gchar *target_host,
+                                           gushort target_port);
+
 G_END_DECLS
+

@@ -100,7 +100,7 @@ static void climber_service_run_socks5(ClimberService *self) {
     self->socks5_service = NULL;
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->socks5_service));
-    g_signal_connect(G_OBJECT(self->socks5_service), "incoming",
+    g_signal_connect(G_OBJECT(self->socks5_service), "run",
                      G_CALLBACK(climber_service_socks5_incoming_handler), self);
     climber_service_emit_log(
         self, "SOCKS5 proxy started on port <span color=\"green\">%d</span>",
@@ -127,7 +127,7 @@ static void climber_service_run_http(ClimberService *self) {
 
   } else {
     g_socket_service_start(G_SOCKET_SERVICE(self->http_service));
-    g_signal_connect(G_OBJECT(self->http_service), "incoming",
+    g_signal_connect(G_OBJECT(self->http_service), "run",
                      G_CALLBACK(climber_service_http_incoming_handler), self);
     climber_service_emit_log(
         self, "HTTP proxy started on port <span color=\"green\">%d</span>",

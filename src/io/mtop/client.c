@@ -93,3 +93,14 @@ GIOStream *mtop_connect(const gchar *username, const gchar *password,
   g_object_unref(response);
   return G_IO_STREAM(tls_client);
 }
+
+GIOStream *mtop_connect_with_server_config(MtopServerConfig *config,
+                                           const gchar *target_host,
+                                           gushort target_port) {
+  return mtop_connect(
+      mtop_server_config_get_username(config),
+      mtop_server_config_get_password(config),
+      mtop_server_config_get_host(config), mtop_server_config_get_port(config),
+      mtop_server_config_get_ca_path(config), target_host, target_port);
+}
+

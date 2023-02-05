@@ -16,13 +16,15 @@ climber_sources = [
   'io/http/common.c',
   'io/mtop/request.c',
   'io/mtop/response.c',
-  'io/mtop/client.c'
+  'io/mtop/client.c',
+  'io/mtop/server-config.c'
 ]
 
 climber_deps = [
   dependency('gtk4'),
   dependency('libadwaita-1'),
-  dependency('libsoup-3.0')
+  dependency('libsoup-3.0'),
+  dependency('json-glib-1.0')
 ]
 
 climber_sources += gnome.compile_resources('climber-resources',
