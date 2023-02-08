@@ -1,0 +1,7 @@
+box#main_vbox{
+  padding: 10px;
+}
+
+label#label{
+  min-width:100px;
+}

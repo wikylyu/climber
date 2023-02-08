@@ -25,11 +25,16 @@ struct _ClimberNewServerDialog {
   GtkDialog parent_instance;
 
   /* Template widgets */
+  GtkEntry *hostname;
   GtkSpinButton *port;
+  GtkButton *filechooser;
 };
 
 G_DEFINE_FINAL_TYPE(ClimberNewServerDialog, climber_new_server_dialog,
                     GTK_TYPE_DIALOG)
+
+static void climber_new_server_filechooser_click_handler(GtkButton *button,
+                                                         gpointer user_data);
 
 static void
 climber_new_server_dialog_class_init(ClimberNewServerDialogClass *klass) {
@@ -39,7 +44,11 @@ climber_new_server_dialog_class_init(ClimberNewServerDialogClass *klass) {
       widget_class,
       CLIMBER_APPLICATION_PATH "/gtk/climber-new-server-dialog.ui");
   gtk_widget_class_bind_template_child(widget_class, ClimberNewServerDialog,
+                                       hostname);
+  gtk_widget_class_bind_template_child(widget_class, ClimberNewServerDialog,
                                        port);
+  gtk_widget_class_bind_template_child(widget_class, ClimberNewServerDialog,
+                                       filechooser);
 }
 
 static void climber_new_server_dialog_init(ClimberNewServerDialog *self) {
@@ -47,6 +56,10 @@ static void climber_new_server_dialog_init(ClimberNewServerDialog *self) {
 
   gtk_widget_apply_css_all(GTK_WIDGET(self), CLIMBER_APPLICATION_PATH
                            "/gtk/climber-new-server-dialog.css");
+
+  g_signal_connect(G_OBJECT(self->filechooser), "clicked",
+                   G_CALLBACK(climber_new_server_filechooser_click_handler),
+                   self);
 }
 
 ClimberNewServerDialog *climber_new_server_dialog_new(GtkWindow *win) {
@@ -60,5 +73,38 @@ ClimberNewServerDialog *climber_new_server_dialog_new(GtkWindow *win) {
   dialog = CLIMBER_NEW_SERVER_DIALOG(obj);
 
   return dialog;
+}
+
+static void on_filechoser_open_response(GtkDialog *dialog, int response,
+                                        gpointer user_data) {
+  if (response == GTK_RESPONSE_ACCEPT) {
+    GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+    GFile *file = gtk_file_chooser_get_file(chooser);
+    if (file != NULL) {
+      gchar *path = g_file_get_path(file);
+      g_object_unref(file);
+      g_print("file path: %s\n", path);
+      g_free(path);
+    }
+  }
+
+  gtk_window_destroy(GTK_WINDOW(dialog));
+}
+
+static void climber_new_server_filechooser_click_handler(GtkButton *button,
+                                                         gpointer user_data) {
+  ClimberNewServerDialog *self = CLIMBER_NEW_SERVER_DIALOG(user_data);
+  GtkWidget *dialog = NULL;
+  GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+  GtkFileFilter *filter = gtk_file_filter_new();
+  gtk_file_filter_add_suffix(filter, "crt");
+  dialog = gtk_file_chooser_dialog_new("Open File", GTK_WINDOW(self), action,
+                                       "_Cancel", GTK_RESPONSE_CANCEL, "_Open",
+                                       GTK_RESPONSE_ACCEPT, NULL);
+  gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
+
+  gtk_window_present(GTK_WINDOW(dialog));
+  g_signal_connect(G_OBJECT(dialog), "response",
+                   G_CALLBACK(on_filechoser_open_response), NULL);
 }
 
