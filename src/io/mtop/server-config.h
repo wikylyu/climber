@@ -35,9 +35,17 @@ MtopServerConfig *mtop_server_config_new(const gchar *host, gushort port,
                                          const gchar *password,
                                          const gchar *ca_path);
 
+/*
+ * Create a MTopServerConfig from JSON node
+ * return NULL if fail
+ */
 MtopServerConfig *mtop_server_config_new_from_json_node(JsonNode *node);
 
+/*
+ * The caller is responsible to free JsonNode
+ */
 JsonNode *mtop_server_config_get_json_node(MtopServerConfig *config);
+
 
 const gchar *mtop_server_config_get_host(MtopServerConfig *config);
 gushort mtop_server_config_get_port(MtopServerConfig *config);

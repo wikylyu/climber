@@ -27,6 +27,7 @@
 #include "climber-window-statusbar.h"
 #include "climber-window.h"
 #include "io/climber-service.h"
+#include "io/mtop/server-config.h"
 #include "message.h"
 #include "style.h"
 
@@ -56,8 +57,10 @@ static void climber_window_finalize(GObject *object);
 
 static void climber_preferences_dialog_response_handler(
     ClimberPreferencesDialog *dialog, gint response_id, gpointer user_data);
-static void climber_new_server_dialog_response_handler(
-    ClimberNewServerDialog *dialog, gint response_id, gpointer user_data);
+static void
+climber_new_server_dialog_confirm_handler(ClimberNewServerDialog *dialog,
+                                          MtopServerConfig *config,
+                                          gpointer user_data);
 
 static void climber_window_class_init(ClimberWindowClass *klass) {
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
@@ -81,8 +84,8 @@ static void climber_window_new_server_action(GSimpleAction *action,
 
   if (self->new_server_dialog == NULL) {
     self->new_server_dialog = climber_new_server_dialog_new(GTK_WINDOW(self));
-    g_signal_connect(G_OBJECT(self->new_server_dialog), "response",
-                     G_CALLBACK(climber_new_server_dialog_response_handler),
+    g_signal_connect(G_OBJECT(self->new_server_dialog), "confirm",
+                     G_CALLBACK(climber_new_server_dialog_confirm_handler),
                      self);
   }
 
@@ -221,13 +224,15 @@ static void climber_preferences_dialog_response_handler(
   window->preferences_dialog = NULL;
 }
 
-static void climber_new_server_dialog_response_handler(
-    ClimberNewServerDialog *dialog, gint response_id, gpointer user_data) {
-
+static void
+climber_new_server_dialog_confirm_handler(ClimberNewServerDialog *dialog,
+                                          MtopServerConfig *config,
+                                          gpointer user_data) {
   ClimberWindow *window = CLIMBER_WINDOW(user_data);
-  if (response_id == GTK_RESPONSE_OK) {
-  }
   gtk_window_destroy(GTK_WINDOW(dialog));
   window->new_server_dialog = NULL;
+  if (config == NULL) {
+    return;
+  }
+  g_print("confirm!\n");
 }
-

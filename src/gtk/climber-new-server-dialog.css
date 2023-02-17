@@ -5,3 +5,7 @@ box#main_vbox{
 label#label{
   min-width:100px;
 }
+
+button#fileclear{
+  border-radius: 20px;
+}

@@ -87,4 +87,3 @@ gint climber_preferences_dialog_get_http_port(
     ClimberPreferencesDialog *dialog) {
   return gtk_spin_button_get_value_as_int(dialog->http_port);
 }
-

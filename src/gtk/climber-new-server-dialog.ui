@@ -145,7 +145,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkDropDown">
+              <object class="GtkDropDown" id="type">
                 <property name="model">
                   <object class="GtkStringList">
                     <items>
@@ -173,7 +173,14 @@
             </child>
             <child>
               <object class="GtkButton" id="filechooser">
-                <property name="label">None</property>
+                <property name="label" translatable="yes">None</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="fileclear">
+                <property name="name">fileclear</property>
+                <property name="visible">FALSE</property>
+                <property name="icon-name">window-close</property>
               </object>
             </child>
           </object>
