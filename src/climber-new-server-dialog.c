@@ -50,8 +50,11 @@ static void climber_new_server_dialog_finalize(GObject *object);
 static void climber_new_server_dialog_response_handler(
     ClimberNewServerDialog *dialog, gint response_id, gpointer user_data);
 static void
-climber_new_server_dialog_hostname_changed_handler(GtkEditable *editable,
-                                                   gpointer user_data);
+climber_new_server_dialog_text_changed_handler(GtkEditable *editable,
+                                               gpointer user_data);
+static void
+climber_new_server_dialog_spin_changed_handler(GtkSpinButton *spin_button,
+                                               gpointer user_data);
 
 static void
 climber_new_server_dialog_class_init(ClimberNewServerDialogClass *klass) {
@@ -107,9 +110,18 @@ static void climber_new_server_dialog_init(ClimberNewServerDialog *self) {
   g_signal_connect(G_OBJECT(self), "response",
                    G_CALLBACK(climber_new_server_dialog_response_handler),
                    self);
-  g_signal_connect(
-      G_OBJECT(self->hostname), "changed",
-      G_CALLBACK(climber_new_server_dialog_hostname_changed_handler), self);
+  g_signal_connect(G_OBJECT(self->hostname), "changed",
+                   G_CALLBACK(climber_new_server_dialog_text_changed_handler),
+                   self);
+  g_signal_connect(G_OBJECT(self->username), "changed",
+                   G_CALLBACK(climber_new_server_dialog_text_changed_handler),
+                   self);
+  g_signal_connect(G_OBJECT(self->password), "changed",
+                   G_CALLBACK(climber_new_server_dialog_text_changed_handler),
+                   self);
+  g_signal_connect(G_OBJECT(self->port), "value-changed",
+                   G_CALLBACK(climber_new_server_dialog_spin_changed_handler),
+                   self);
 }
 
 static void climber_new_server_dialog_finalize(GObject *object) {
@@ -180,7 +192,7 @@ static void climber_new_server_fileclear_click_handler(GtkButton *button,
   gtk_button_set_label(self->filechooser, "None");
 }
 
-static gchar *validateText(const gchar *text) {
+static gchar *getTrimText(const gchar *text) {
   if (text == NULL) {
     return NULL;
   }
@@ -190,29 +202,82 @@ static gchar *validateText(const gchar *text) {
 static void climber_new_server_dialog_response_handler(
     ClimberNewServerDialog *self, gint response_id, gpointer user_data) {
   gchar *hostname = NULL;
+  gchar *username = NULL;
+  gchar *password = NULL;
+  gchar *proto = NULL;
+  gchar *type = NULL;
+  gchar *ca = NULL;
+  gint port = 0;
+  gboolean error = FALSE;
+  MtopServerConfig *config = NULL;
   if (response_id != GTK_RESPONSE_OK) {
     g_signal_emit_by_name(self, "confirm", NULL);
     return;
   }
-  hostname = validateText(gtk_editable_get_text(GTK_EDITABLE(self->hostname)));
+  hostname = getTrimText(gtk_editable_get_text(GTK_EDITABLE(self->hostname)));
   if (hostname == NULL || strlen(hostname) == 0) {
     gtk_widget_add_css_class(GTK_WIDGET(self->hostname), "error");
+    error = TRUE;
+  }
+  port = gtk_spin_button_get_value_as_int(self->port);
+  if (port <= 0 || port > G_MAXUINT16) {
+    gtk_widget_add_css_class(GTK_WIDGET(self->port), "error");
+    error = TRUE;
+  }
+  username = getTrimText(gtk_editable_get_text(GTK_EDITABLE(self->username)));
+  if (username == NULL || strlen(username) == 0) {
+    gtk_widget_add_css_class(GTK_WIDGET(self->username), "error");
+    error = TRUE;
+  }
+  password = getTrimText(gtk_editable_get_text(GTK_EDITABLE(self->password)));
+  if (password == NULL || strlen(password) == 0) {
+    gtk_widget_add_css_class(GTK_WIDGET(self->password), "error");
+    error = TRUE;
+  }
+  if (error) {
     g_free(hostname);
+    g_free(username);
+    g_free(password);
     return;
   }
+  proto = getTrimText(gtk_editable_get_text(GTK_EDITABLE(self->proto)));
+  if (gtk_drop_down_get_selected(self->type) == 0) {
+    type = g_strdup("tls");
+  } else {
+    type = g_strdup("quic");
+  }
+  if (self->ca_file != NULL) {
+    ca = g_file_get_path(self->ca_file);
+  }
+  config = mtop_server_config_new(hostname, (gushort)port, username, password,
+                                  type, proto, ca);
   g_free(hostname);
-  g_signal_emit_by_name(self, "confirm", NULL);
-  g_print("hello\n");
+  g_free(username);
+  g_free(password);
+  g_free(proto);
+  g_free(type);
+  g_free(ca);
+  g_signal_emit_by_name(self, "confirm", config);
 }
 
 static void
-climber_new_server_dialog_hostname_changed_handler(GtkEditable *editable,
-                                                   gpointer user_data) {
-  gchar *hostname = validateText(gtk_editable_get_text(editable));
-  if (hostname == NULL || strlen(hostname) == 0) {
-    g_free(hostname);
+climber_new_server_dialog_text_changed_handler(GtkEditable *editable,
+                                               gpointer user_data) {
+  gchar *text = getTrimText(gtk_editable_get_text(editable));
+  if (text == NULL || strlen(text) == 0) {
+    g_free(text);
     return;
   }
-  g_free(hostname);
+  g_free(text);
   gtk_widget_remove_css_class(GTK_WIDGET(editable), "error");
 }
+
+static void
+climber_new_server_dialog_spin_changed_handler(GtkSpinButton *spin_button,
+                                               gpointer user_data) {
+  gint port = gtk_spin_button_get_value_as_int(spin_button);
+  if (port > 0 && port <= G_MAXUINT16) {
+    gtk_widget_remove_css_class(GTK_WIDGET(spin_button), "error");
+  }
+}
+

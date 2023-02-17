@@ -21,10 +21,12 @@
 
 struct _MtopServerConfig {
   GObject parent_instance;
+  gchar *type;
   gchar *username;
   gchar *password;
   gchar *host;
   gushort port;
+  gchar *proto;
   gchar *ca_path;
 };
 
@@ -36,6 +38,8 @@ static void mtop_server_config_finalize(GObject *object) {
   g_free(self->password);
   g_free(self->host);
   g_free(self->ca_path);
+  g_free(self->type);
+  g_free(self->proto);
   G_OBJECT_CLASS(mtop_server_config_parent_class)->finalize(object);
 }
 
@@ -48,6 +52,7 @@ static void mtop_server_config_init(MtopServerConfig *self) {}
 MtopServerConfig *mtop_server_config_new(const gchar *host, gushort port,
                                          const gchar *username,
                                          const gchar *password,
+                                         const gchar *type, const gchar *proto,
                                          const gchar *ca_path) {
   MtopServerConfig *self =
       MTOP_SERVER_CONFIG(g_object_new(MTOP_TYPE_SERVER_CONFIG, NULL));
@@ -56,6 +61,8 @@ MtopServerConfig *mtop_server_config_new(const gchar *host, gushort port,
   self->username = g_strdup(username);
   self->password = g_strdup(password);
   self->ca_path = g_strdup(ca_path);
+  self->type = g_strdup(type);
+  self->proto = g_strdup(proto);
   return self;
 }
 
@@ -66,6 +73,8 @@ MtopServerConfig *mtop_server_config_new_from_json_node(JsonNode *node) {
   const gchar *username = NULL;
   const gchar *password = NULL;
   const gchar *ca_path = NULL;
+  const gchar *type = NULL;
+  const gchar *proto = NULL;
   if (!JSON_NODE_HOLDS_OBJECT(node)) {
     return NULL;
   }
@@ -75,10 +84,13 @@ MtopServerConfig *mtop_server_config_new_from_json_node(JsonNode *node) {
   username = json_object_get_string_member(obj, "username");
   password = json_object_get_string_member(obj, "password");
   ca_path = json_object_get_string_member(obj, "ca_path");
+  type = json_object_get_string_member(obj, "type");
+  proto = json_object_get_string_member(obj, "proto");
   if (host == NULL || port == 0 || username == NULL || password == NULL) {
     return NULL;
   }
-  return mtop_server_config_new(host, port, username, password, ca_path);
+  return mtop_server_config_new(host, port, username, password, type, proto,
+                                ca_path);
 }
 
 JsonNode *mtop_server_config_get_json_node(MtopServerConfig *self) {
@@ -89,6 +101,8 @@ JsonNode *mtop_server_config_get_json_node(MtopServerConfig *self) {
   json_object_set_int_member(obj, "port", self->port);
   json_object_set_string_member(obj, "username", self->username);
   json_object_set_string_member(obj, "password", self->password);
+  json_object_set_string_member(obj, "type", self->type);
+  json_object_set_string_member(obj, "proto", self->proto);
   if (self->ca_path != NULL) {
     json_object_set_string_member(obj, "ca_path", self->ca_path);
   }
@@ -110,5 +124,26 @@ const gchar *mtop_server_config_get_password(MtopServerConfig *config) {
 }
 const gchar *mtop_server_config_get_ca_path(MtopServerConfig *config) {
   return config->ca_path;
+}
+
+const gchar *mtop_server_config_get_mtype(MtopServerConfig *config) {
+  return config->type;
+}
+
+const gchar *mtop_server_config_get_proto(MtopServerConfig *config) {
+  return config->proto;
+}
+
+GUri *mtop_server_config_get_uri(MtopServerConfig *config) {
+  gchar *userinfo =
+      g_strdup_printf("%s:%s", config->username, config->password);
+  gchar *path = g_strdup_printf("/%s", config->type);
+  gchar *query = g_strdup_printf("proto=%s", config->proto);
+  GUri *uri = g_uri_build(G_URI_FLAGS_NONE, "mtop", userinfo, config->host,
+                          config->port, path, query, NULL);
+  g_free(userinfo);
+  g_free(path);
+  g_free(query);
+  return uri;
 }
 

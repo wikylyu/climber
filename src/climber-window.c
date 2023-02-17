@@ -228,11 +228,20 @@ static void
 climber_new_server_dialog_confirm_handler(ClimberNewServerDialog *dialog,
                                           MtopServerConfig *config,
                                           gpointer user_data) {
+  GUri *uri = NULL;
   ClimberWindow *window = CLIMBER_WINDOW(user_data);
+  gchar *uristring = NULL;
   gtk_window_destroy(GTK_WINDOW(dialog));
   window->new_server_dialog = NULL;
   if (config == NULL) {
     return;
   }
-  g_print("confirm!\n");
+
+  uri = mtop_server_config_get_uri(config);
+  uristring = g_uri_to_string(uri);
+  g_print("confirm: %s\n", uristring);
+  g_object_unref(config);
+  g_uri_unref(uri);
+  g_free(uristring);
 }
+

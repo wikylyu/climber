@@ -33,6 +33,7 @@ G_DECLARE_FINAL_TYPE(MtopServerConfig, mtop_server_config, MTOP, SERVER_CONFIG,
 MtopServerConfig *mtop_server_config_new(const gchar *host, gushort port,
                                          const gchar *username,
                                          const gchar *password,
+                                         const gchar *type, const gchar *proto,
                                          const gchar *ca_path);
 
 /*
@@ -46,12 +47,15 @@ MtopServerConfig *mtop_server_config_new_from_json_node(JsonNode *node);
  */
 JsonNode *mtop_server_config_get_json_node(MtopServerConfig *config);
 
-
 const gchar *mtop_server_config_get_host(MtopServerConfig *config);
 gushort mtop_server_config_get_port(MtopServerConfig *config);
 const gchar *mtop_server_config_get_username(MtopServerConfig *config);
 const gchar *mtop_server_config_get_password(MtopServerConfig *config);
 const gchar *mtop_server_config_get_ca_path(MtopServerConfig *config);
+const gchar *mtop_server_config_get_mtype(MtopServerConfig *config);
+const gchar *mtop_server_config_get_proto(MtopServerConfig *config);
+
+GUri *mtop_server_config_get_uri(MtopServerConfig *config);
 
 G_END_DECLS
 
